@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Profile</title>
+    <style>
+        html, body { height: 100%; margin:0; display:flex; justify-content:center; align-items:center; font-family:Arial; background:#f0f0f0; }
+        .container { background:white; padding:30px; border-radius:8px; text-align:center; box-shadow:0 0 10px rgba(0,0,0,0.1); width:300px; }
+        input, select, button { width:100%; padding:10px; margin:8px 0; border-radius:4px; }
+        button { background:#ffc107; color:white; border:none; cursor:pointer; }
+        button:hover { background:#e0a800; }
+        a { display:block; margin-top:10px; color:#007bff; text-decoration:none; }
+        a:hover { text-decoration:underline; }
+        p.error { color:red; font-size:14px; }
+        .btn-home { background:#007bff; color:white; padding:10px; border-radius:4px; display:inline-block; margin-top:10px; text-decoration:none; }
+        .btn-home:hover { background:#0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Edit Profile</h2>
+
+        <form method="POST">
+            <!-- Name -->
+            <input type="text" name="name" value="{{ user.name }}" placeholder="Full Name" required>
+
+            <!-- Email -->
+            <input type="email" name="email" value="{{ user.email }}" placeholder="Email" required>
+
+            <!-- Gender -->
+            <select name="gender" required>
+                <option value="">Select Gender</option>
+                <option value="male" {% if user.gender == 'male' %}selected{% endif %}>Male</option>
+                <option value="female" {% if user.gender == 'female' %}selected{% endif %}>Female</option>
+                <option value="other" {% if user.gender == 'other' %}selected{% endif %}>Other</option>
+            </select>
+
+            <!-- Username -->
+            <input type="text" name="username" value="{{ user.username }}" placeholder="Username (8-9 letters/numbers)" required>
+
+            <!-- Password -->
+            <input type="password" name="password" placeholder="New Password (8 digits/hex)" required>
+
+            <button type="submit">Update Profile</button>
+
+            {% if error %}
+                <p class="error">{{ error }}</p>
+            {% endif %}
+        </form>
+
+        <a href="/summary">Back to Summary</a>
+        <a href="/" class="btn-home">Back to Login/Home Page</a>
+    </div>
+</body>
+</html>
