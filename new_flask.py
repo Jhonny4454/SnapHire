@@ -1,12 +1,17 @@
+
+# ---------------- DATABASE CONFIG ----------------
+
+
 from flask import Flask, render_template, request, redirect, session, g, jsonify, flash
 import mysql.connector
 import hashlib
 import uuid
 import os
 from datetime import datetime
+import ssl
 
 app = Flask(__name__)
-app.secret_key = "secret_key_123"
+app.secret_key = os.getenv("SECRET_KEY", "secret_key_123")
 
 # ---------------- DATABASE CONFIG ----------------
 DB_NAME = os.getenv("DB_NAME")
@@ -15,31 +20,16 @@ DB_PASS = os.getenv("DB_PASS")
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = int(os.getenv("DB_PORT", 3306))
 
-# safety check
-if not all([DB_HOST, DB_USER, DB_PASS, DB_NAME]):
-    raise Exception("❌ Database environment variables not set")
-# ---------------- DATABASE CONNECTION ----------------
-def get_db():
-    if "db" not in g:
-        try:
-            g.db = mysql.connector.connect(
-                host=DB_HOST,
-                user=DB_USER,
-                password=DB_PASS,
-                database=DB_NAME,
-                port=DB_PORT   # ✅ ADD THIS LINE
-            )
-        except Exception as e:
-            print("DB Error:", e)
-            return None
-    return g.db
-
-@app.teardown_appcontext
-def close_db(exception):
-    db = g.pop("db", None)
-    if db:
-        db.close()
-
+# fallback for local
+if not DB_HOST:
+    DB_NAME = "sumedh"
+    DB_USER = "root"
+    DB_PASS = "sumedh2004"
+    DB_HOST = "localhost"
+    DB_PORT = 3306
+    print("⚠️ Running locally")
+else:
+    print(f"📊 Connecting to DB: {DB_HOST}:{DB_PORT} - {DB_NAME}")
 #--------------- Admin Login-----------
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
@@ -50,6 +40,31 @@ def admin_login():
         else:
             return render_template("admin_login.html", error="Invalid credentials")
     return render_template("admin_login.html")
+
+
+def get_db():
+    if "db" not in g:
+        try:
+            g.db = mysql.connector.connect(
+                host=DB_HOST,
+                user=DB_USER,
+                password=DB_PASS,
+                database=DB_NAME,
+                port=DB_PORT,
+                autocommit=False
+            )
+            print("✅ Database connected")
+        except Exception as e:
+            print("❌ DB Error:", e)
+            return None
+    return g.db
+
+
+@app.teardown_appcontext
+def close_db(exception):
+    db = g.pop("db", None)
+    if db:
+        db.close()
 
 # ---------------- HASH PASSWORD ----------------
 def hash_password(password):
