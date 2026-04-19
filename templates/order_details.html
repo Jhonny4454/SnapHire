@@ -91,6 +91,32 @@ header {
   margin-right: 10px;
 }
 
+/* ALERT MESSAGES */
+.alert {
+  padding: 15px 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.alert-error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.alert-success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.alert i {
+  font-size: 20px;
+}
+
 /* ORDER INFO GRID */
 .order-info-grid {
   display: grid;
@@ -288,28 +314,6 @@ tr:hover {
   color: #ffd700;
 }
 
-/* TOTAL SECTION */
-.total-section {
-  margin-top: 25px;
-  padding-top: 20px;
-  border-top: 2px solid #eee;
-  text-align: right;
-  background: #f8f9fa;
-  padding: 20px;
-  border-radius: 10px;
-}
-
-.total {
-  font-size: 24px;
-  font-weight: bold;
-  color: #333;
-}
-
-.total span {
-  color: #ff7f50;
-  font-size: 28px;
-}
-
 /* BUTTONS */
 .action-buttons {
   display: flex;
@@ -474,21 +478,42 @@ footer {
 
 <div class="container">
 
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+          <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i>
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
   <div class="card">
     <h2><i class="fas fa-receipt"></i> Order Details</h2>
 
     {% if order %}
 
-    <!-- ✅ Calculate totals using simple Jinja2 arithmetic -->
-    {% set subtotal = 0 %}
-    {% if items %}
-      {% for item in items %}
-        {% set subtotal = subtotal + (item.price * item.quantity) %}
-      {% endfor %}
+    <!-- Check if we have calculated values passed from Flask, otherwise calculate here -->
+    {% if subtotal is defined and gst_amount is defined and service_charge is defined and grand_total is defined %}
+      <!-- Use values passed from Flask -->
+      {% set final_subtotal = subtotal %}
+      {% set final_gst = gst_amount %}
+      {% set final_service = service_charge %}
+      {% set final_grand = grand_total %}
+    {% else %}
+      <!-- Fallback calculation in template -->
+      {% set final_subtotal = 0 %}
+      {% if items %}
+        {% for item in items %}
+          {% set final_subtotal = final_subtotal + (item.price * item.quantity) %}
+        {% endfor %}
+      {% endif %}
+      {% set final_gst = final_subtotal * 0.18 %}
+      {% set final_service = final_subtotal * 0.05 %}
+      {% set final_grand = final_subtotal + final_gst + final_service %}
     {% endif %}
-    {% set gst_amount = subtotal * 0.18 %}
-    {% set service_charge = subtotal * 0.05 %}
-    {% set grand_total = subtotal + gst_amount + service_charge %}
 
     <!-- Order Information Grid -->
     <div class="order-info-grid">
@@ -538,12 +563,11 @@ footer {
           <strong>Payment Method:</strong>
           <span>{{ order.payment_method|title if order.payment_method else 'Not specified' }}</span>
         </div>
-        <!-- ✅ FIXED: Now shows GST-inclusive grand total -->
         <div class="info-item">
           <i class="fas fa-rupee-sign"></i>
           <strong>Total Amount:</strong>
           <span style="color: #ff7f50; font-size: 18px; font-weight: bold;">
-            ₹{{ "%.2f"|format(grand_total) }}
+            ₹{{ "%.2f"|format(final_grand) }}
             <small style="color: #888; font-size: 12px;">(incl. GST)</small>
           </span>
         </div>
@@ -583,7 +607,7 @@ footer {
                 {% if item.location %}
                   <br><small style="color: #888;">📍 {{ item.location }}</small>
                 {% endif %}
-               </td>
+              </td>
               <td>
                 <div class="photographer-info">
                   {% if item.photographer_name %}
@@ -609,36 +633,36 @@ footer {
                     <small style="color: #ff7f50;">Will be assigned soon</small>
                   {% endif %}
                 </div>
-               </td>
+              </td>
               <td>₹{{ "%.2f"|format(item.price) }}</td>
               <td>{{ item.quantity }}</td>
               <td>₹{{ "%.2f"|format(item_total) }}</td>
             </tr>
           {% endfor %}
         </tbody>
-       </table>
+      </table>
     </div>
 
-    <!-- ✅ Bill Section with proper GST calculation -->
+    <!-- Bill Section with proper GST calculation -->
     <div class="bill-section">
       <div class="bill-header">
         <i class="fas fa-file-invoice-dollar"></i> Payment Summary
       </div>
       <div class="bill-details">
         <span class="bill-label">Subtotal:</span>
-        <span class="bill-value">₹{{ "%.2f"|format(subtotal) }}</span>
+        <span class="bill-value">₹{{ "%.2f"|format(final_subtotal) }}</span>
       </div>
       <div class="bill-details">
         <span class="bill-label">GST (18%):</span>
-        <span class="bill-value">₹{{ "%.2f"|format(gst_amount) }}</span>
+        <span class="bill-value">₹{{ "%.2f"|format(final_gst) }}</span>
       </div>
       <div class="bill-details">
         <span class="bill-label">Service Charge (5%):</span>
-        <span class="bill-value">₹{{ "%.2f"|format(service_charge) }}</span>
+        <span class="bill-value">₹{{ "%.2f"|format(final_service) }}</span>
       </div>
       <div class="bill-total">
         <span class="bill-label">Grand Total:</span>
-        <span class="bill-value">₹{{ "%.2f"|format(grand_total) }}</span>
+        <span class="bill-value">₹{{ "%.2f"|format(final_grand) }}</span>
       </div>
       <small style="display: block; margin-top: 15px; text-align: center; opacity: 0.8;">
         <i class="fas fa-check-circle"></i> Inclusive of all taxes and charges

@@ -554,6 +554,7 @@ def orders():
     return render_template("orders.html", orders=orders)
 
 #------------------ Order Details (UPDATED WITH GST CALCULATION) ----------------
+#------------------ Order Details (UPDATED WITH DEBUGGING) ----------------
 @app.route("/order_details/<string:order_id>")
 def order_details(order_id):
     if "user_id" not in session:
@@ -567,6 +568,7 @@ def order_details(order_id):
     cursor = db.cursor(dictionary=True)
 
     try:
+        # First, check if order exists and belongs to user
         cursor.execute("""
             SELECT 
                 order_id,
@@ -581,11 +583,26 @@ def order_details(order_id):
         """, (order_id, session["user_id"]))
 
         order = cursor.fetchone()
+        
+        print(f"🔍 Looking for order: {order_id} for user: {session['user_id']}")
+        print(f"📦 Order found: {order}")
 
         if not order:
+            # Check if order exists but belongs to different user
+            cursor.execute("""
+                SELECT user_id FROM orders WHERE order_id = %s
+            """, (order_id,))
+            wrong_user = cursor.fetchone()
+            
+            if wrong_user:
+                flash("⚠️ This order belongs to a different account!", "error")
+            else:
+                flash("❌ Order not found!", "error")
+            
             cursor.close()
-            return render_template("order_details.html", order=None, items=[], subtotal=0, gst_amount=0, service_charge=0, grand_total=0)
+            return redirect("/orders")
 
+        # Fetch order items
         cursor.execute("""
             SELECT 
                 oi.package_name,
@@ -601,17 +618,17 @@ def order_details(order_id):
         """, (order_id,))
         
         items = cursor.fetchall()
+        print(f"📦 Items found: {len(items)}")
         
-        # Calculate subtotal (sum of all item prices * quantities)
+        # Calculate totals
         subtotal = sum(item["price"] * item["quantity"] for item in items)
-        
-        # Calculate GST (18%) and Service Charge (5%)
         gst_amount = subtotal * 0.18
         service_charge = subtotal * 0.05
         grand_total = subtotal + gst_amount + service_charge
         
     except Exception as e:
         print("Order Details Error:", e)
+        flash(f"Error loading order: {str(e)}", "error")
         order = None
         items = []
         subtotal = 0
@@ -630,7 +647,6 @@ def order_details(order_id):
         service_charge=service_charge,
         grand_total=grand_total
     )
-
 # ---------------- PHOTOGRAPHER APPLY ----------------
 @app.route("/photographer/apply", methods=["POST"])
 def apply_photographer():
