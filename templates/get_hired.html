@@ -18,7 +18,10 @@
 body {
   margin: 0;
   font-family: 'Segoe UI', 'Arial', sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, 
+    #ff7f50, #ff9966, #ff6b6b, #c06c84, 
+    #6c5b7b, #355c7d, #2193b0, #ff7f50);
+  background-size: 400% 400%;
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -26,43 +29,38 @@ body {
   padding: clamp(20px, 5vw, 40px) clamp(15px, 4vw, 20px);
   position: relative;
   overflow-x: hidden;
+  animation: gradientShift 4s ease infinite;
 }
 
-/* Animated background */
+/* Fast 7-color smooth gradient animation */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  14% { background-position: 20% 50%; }
+  28% { background-position: 40% 50%; }
+  42% { background-position: 60% 50%; }
+  57% { background-position: 80% 50%; }
+  71% { background-position: 100% 50%; }
+  85% { background-position: 80% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Animated background overlay */
 body::before {
   content: "";
   position: absolute;
-  width: 600px;
-  height: 600px;
-  background: rgba(255,255,255,0.1);
-  filter: blur(120px);
-  top: -100px;
-  left: -100px;
-  border-radius: 50%;
-  z-index: -2;
-  animation: float 20s ease-in-out infinite;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 60%);
+  pointer-events: none;
+  animation: pulse 3s ease-in-out infinite;
 }
 
-body::after {
-  content: "";
-  position: absolute;
-  width: 500px;
-  height: 500px;
-  background: rgba(0,0,0,0.1);
-  filter: blur(120px);
-  bottom: -100px;
-  right: -100px;
-  border-radius: 50%;
-  z-index: -2;
-  animation: float 15s ease-in-out infinite reverse;
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
 }
 
-@keyframes float {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(50px, 50px); }
-}
-
-/* Particle effects */
+/* Floating particles */
 .particle {
   position: absolute;
   background: rgba(255,255,255,0.2);
@@ -73,7 +71,9 @@ body::after {
 
 @keyframes particleFloat {
   0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
-  50% { opacity: 0.5; }
+  25% { opacity: 0.3; }
+  50% { transform: translateY(-50px) translateX(30px); opacity: 0.5; }
+  75% { opacity: 0.3; }
 }
 
 .container {
@@ -105,17 +105,30 @@ body::after {
   width: clamp(60px, 15vw, 80px);
   height: clamp(60px, 15vw, 80px);
   background: linear-gradient(135deg, #ff7f50, #ff6347);
+  background-size: 200% 200%;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 20px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  animation: iconGradient 3s ease infinite;
+}
+
+@keyframes iconGradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 .header-icon i {
   font-size: clamp(30px, 8vw, 40px);
   color: white;
+  animation: bounce 2s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 }
 
 h1 {
@@ -124,6 +137,7 @@ h1 {
   color: white;
   font-size: clamp(22px, 6vw, 28px);
   font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
 }
 
 .subtitle {
@@ -134,7 +148,7 @@ h1 {
   line-height: 1.5;
 }
 
-/* Back Buttons */
+/* Back Buttons - Animated */
 .back-buttons {
   display: flex;
   justify-content: space-between;
@@ -161,8 +175,15 @@ h1 {
 }
 
 .back-buttons a:hover {
-  background: rgba(255,255,255,0.3);
-  transform: translateY(-2px);
+  background: linear-gradient(135deg, #ff7f50, #ff6347);
+  background-size: 200% 200%;
+  transform: translateY(-3px);
+  animation: buttonGradient 3s ease infinite;
+}
+
+@keyframes buttonGradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 /* Form */
@@ -184,6 +205,13 @@ form {
   color: rgba(255,255,255,0.7);
   font-size: 16px;
   z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus + i,
+.form-group select:focus + i,
+.form-group textarea:focus + i {
+  color: #ff7f50;
 }
 
 input, textarea, select {
@@ -207,7 +235,7 @@ input::placeholder, textarea::placeholder {
 input:focus, textarea:focus, select:focus {
   box-shadow: 0 0 15px rgba(255,255,255,0.4);
   background: rgba(255,255,255,0.25);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 /* Experience row */
@@ -238,7 +266,7 @@ input:focus, textarea:focus, select:focus {
   pointer-events: none;
 }
 
-/* Submit Button */
+/* Submit Button - Animated */
 button {
   width: 100%;
   padding: clamp(12px, 3.5vw, 15px);
@@ -246,6 +274,7 @@ button {
   border: none;
   border-radius: 35px;
   background: linear-gradient(135deg, #ff7f50, #ff6347);
+  background-size: 200% 200%;
   color: white;
   font-size: clamp(14px, 4vw, 16px);
   font-weight: bold;
@@ -255,15 +284,16 @@ button {
   align-items: center;
   justify-content: center;
   gap: 10px;
+  animation: buttonGradient 3s ease infinite;
 }
 
 button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 15px 35px rgba(255,127,80,0.5);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 18px 35px rgba(255,127,80,0.5);
 }
 
 button:active {
-  transform: translateY(0);
+  transform: scale(0.98);
 }
 
 button:disabled {
@@ -304,6 +334,12 @@ button:disabled {
   gap: 8px;
   font-size: clamp(11px, 3vw, 13px);
   color: rgba(255,255,255,0.8);
+  transition: all 0.3s ease;
+}
+
+.benefit-item:hover {
+  transform: translateX(5px);
+  color: #ffd700;
 }
 
 .benefit-item i {
@@ -394,6 +430,11 @@ button:disabled {
 @media print {
   body::before, body::after, .particle, .back-buttons {
     display: none;
+  }
+  
+  body {
+    background: white;
+    animation: none;
   }
   
   .container {
@@ -567,21 +608,35 @@ document.getElementById('applicationForm')?.addEventListener('submit', function(
 
 // Create floating particles
 function createParticles() {
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 40; i++) {
     const particle = document.createElement('div');
     particle.classList.add('particle');
-    const size = Math.random() * 5 + 2;
+    const size = Math.random() * 6 + 2;
     particle.style.width = size + 'px';
     particle.style.height = size + 'px';
     particle.style.left = Math.random() * 100 + '%';
     particle.style.top = Math.random() * 100 + '%';
     particle.style.animationDelay = Math.random() * 10 + 's';
-    particle.style.animationDuration = Math.random() * 10 + 5 + 's';
+    particle.style.animationDuration = Math.random() * 15 + 8 + 's';
     document.body.appendChild(particle);
   }
 }
 
 createParticles();
+
+// Auto-hide flash messages after 3 seconds
+setTimeout(function() {
+  const alerts = document.querySelectorAll('.alert');
+  alerts.forEach(function(alert) {
+    alert.style.transition = 'opacity 0.5s ease';
+    alert.style.opacity = '0';
+    setTimeout(function() {
+      if (alert.parentNode) {
+        alert.parentNode.removeChild(alert);
+      }
+    }, 500);
+  });
+}, 3000);
 </script>
 
 </body>

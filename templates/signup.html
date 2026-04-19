@@ -2,214 +2,440 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Sign Up - NA Photography Studio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Login - SnapHire</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
 <style>
 * {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
 html, body {
   margin: 0;
-  font-family: 'Arial', sans-serif;
-  background: linear-gradient(135deg, #ff7f50, #ff9966);
+  font-family: 'Segoe UI', 'Arial', sans-serif;
+  background: linear-gradient(135deg, 
+    #ff7f50, #ff9966, #ff6b6b, #c06c84, 
+    #6c5b7b, #355c7d, #2193b0, #ff7f50);
+  background-size: 400% 400%;
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  animation: fadeIn 0.8s ease;
+  animation: gradientShift 4s ease infinite;
+  position: relative;
+  overflow: hidden;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* Fast 7-color smooth gradient animation */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  14% { background-position: 20% 50%; }
+  28% { background-position: 40% 50%; }
+  42% { background-position: 60% 50%; }
+  57% { background-position: 80% 50%; }
+  71% { background-position: 100% 50%; }
+  85% { background-position: 80% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-.signup-container {
-  background: white;
-  padding: 35px;
-  border-radius: 15px;
-  width: 380px;
-  max-width: 90%;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+/* Animated background particles */
+body::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.15) 0%, transparent 60%);
+  pointer-events: none;
+  animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+/* Floating particles */
+.particle {
+  position: absolute;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: float 10s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+  25% { opacity: 0.4; }
+  50% { transform: translateY(-60px) translateX(40px); opacity: 0.6; }
+  75% { opacity: 0.4; }
+}
+
+/* LOGIN CONTAINER - Glass Morphism */
+.login-container {
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(15px);
+  padding: clamp(30px, 7vw, 45px);
+  border-radius: 28px;
+  width: min(420px, 90%);
+  box-shadow: 0 30px 60px rgba(0,0,0,0.3);
   animation: slideUp 0.6s ease;
+  border: 1px solid rgba(255,255,255,0.3);
+  position: relative;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.login-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 35px 70px rgba(0,0,0,0.35);
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(40px); }
+  from { opacity: 0; transform: translateY(50px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Logo Section */
+.logo-section {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.logo-icon {
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #ff7f50, #ff6347);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 15px;
+  animation: bounce 2s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.logo-icon i {
+  font-size: 32px;
+  color: white;
 }
 
 h2 {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 8px;
   color: #333;
+  font-size: clamp(26px, 6vw, 32px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
+.subtitle {
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+  margin-bottom: 30px;
+}
+
+/* Input Groups */
 .input-group {
   position: relative;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .input-group i {
   position: absolute;
   top: 50%;
-  left: 12px;
+  left: 15px;
   transform: translateY(-50%);
   color: #999;
+  z-index: 1;
+  transition: all 0.3s ease;
 }
 
-input, select {
+.input-group input {
   width: 100%;
-  padding: 12px 12px 12px 38px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
+  padding: 14px 15px 14px 45px;
+  border-radius: 14px;
+  border: 2px solid #e0e0e0;
   outline: none;
-  transition: 0.3s;
-  font-size: 14px;
+  transition: all 0.3s ease;
+  font-size: 15px;
+  background: white;
 }
 
-input:focus, select:focus {
+.input-group input:focus {
   border-color: #ff7f50;
-  box-shadow: 0 0 10px rgba(255,127,80,0.3);
+  box-shadow: 0 0 0 4px rgba(255,127,80,0.1);
+  transform: translateY(-1px);
 }
 
-.helper {
-  font-size: 12px;
-  color: #888;
-  margin-top: -10px;
-  margin-bottom: 10px;
-  padding-left: 5px;
+.input-group input:focus + i {
+  color: #ff7f50;
 }
 
-button {
+/* Password Toggle */
+.toggle-password {
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #999;
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+.toggle-password:hover {
+  color: #ff7f50;
+}
+
+/* Button - Animated */
+.login-btn {
   width: 100%;
-  padding: 12px;
-  margin-top: 15px;
+  padding: 14px;
+  margin-top: 25px;
   border: none;
-  border-radius: 25px;
-  background: linear-gradient(45deg, #ff7f50, #ff6347);
+  border-radius: 35px;
+  background: linear-gradient(135deg, #ff7f50, #ff6347);
+  background-size: 200% 200%;
   color: white;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.3s ease;
   box-shadow: 0 10px 25px rgba(255,127,80,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  animation: buttonGradient 3s ease infinite;
 }
 
-button:hover {
-  transform: translateY(-3px) scale(1.05);
+@keyframes buttonGradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.login-btn:hover {
+  transform: translateY(-3px);
   box-shadow: 0 15px 35px rgba(255,127,80,0.6);
 }
 
-.error {
-  margin-top: 12px;
-  text-align: center;
-  color: red;
-  font-size: 14px;
+.login-btn:active {
+  transform: scale(0.98);
 }
 
-.login-link {
+/* Sign Up Link */
+.signup-link {
   text-align: center;
-  margin-top: 15px;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
 }
 
-.login-link a {
+.signup-link a {
   text-decoration: none;
   color: #ff7f50;
   font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  font-size: 14px;
 }
 
-.login-link a:hover {
+.signup-link a:hover {
   color: #ff6347;
+  transform: translateX(5px);
+}
+
+/* Forgot Password */
+.forgot-link {
+  text-align: right;
+  margin-top: -10px;
+  margin-bottom: 5px;
+}
+
+.forgot-link a {
+  text-decoration: none;
+  color: #999;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.forgot-link a:hover {
+  color: #ff7f50;
+}
+
+/* Error Message */
+.error {
+  margin-top: 15px;
+  text-align: center;
+  color: #e74c3c;
+  font-size: 13px;
+  background: rgba(231,76,60,0.1);
+  padding: 12px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  animation: shake 0.5s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .login-container {
+    padding: 25px 20px;
+  }
+  
+  .logo-icon {
+    width: 55px;
+    height: 55px;
+  }
+  
+  .logo-icon i {
+    font-size: 26px;
+  }
+  
+  .input-group input {
+    padding: 12px 12px 12px 42px;
+  }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+  .login-container {
+    padding: 20px;
+  }
+  
+  .logo-section {
+    margin-bottom: 20px;
+  }
+  
+  .logo-icon {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+/* Print styles */
+@media print {
+  body::before, .particle {
+    display: none;
+  }
+  
+  .login-container {
+    background: white;
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+  
+  .login-btn {
+    display: none;
+  }
 }
 </style>
 </head>
 
 <body>
 
-<div class="signup-container">
-  <h2>Create Account</h2>
-
-  <form method="POST" action="/signup">
-
-    <div class="input-group">
-      <i class="fas fa-user"></i>
-      <input type="text" name="first_name" placeholder="First Name" required>
+<div class="login-container">
+  <div class="logo-section">
+    <div class="logo-icon">
+      <i class="fas fa-camera"></i>
     </div>
-
-    <div class="input-group">
-      <i class="fas fa-user"></i>
-      <input type="text" name="last_name" placeholder="Last Name" required>
-    </div>
-
-    <div class="input-group">
-      <i class="fas fa-envelope"></i>
-      <input type="email" name="email" placeholder="Email" required>
-    </div>
-
-    <!-- ✅ MOBILE NUMBER -->
-    <div class="input-group">
-      <i class="fas fa-phone"></i>
-      <input 
-        type="text" 
-        name="mobile" 
-        placeholder="Mobile Number" 
-        pattern="[0-9]{10}" 
-        title="Enter 10 digit mobile number"
-        required>
-    </div>
-    <div class="helper">Mobile: Must be exactly 10 digits</div>
-
-    <div class="input-group">
-      <i class="fas fa-venus-mars"></i>
-      <select name="gender" required>
-        <option value="">Select Gender</option>
-        <option value="male">Male</option>
-        <option value="female">Female</option>
-        <option value="other">Other</option>
-      </select>
-    </div>
-
-    <div class="input-group">
-      <i class="fas fa-user-circle"></i>
-      <input 
-        type="text" 
-        name="username" 
-        placeholder="Username" 
-        pattern="[a-zA-Z0-9]{4,20}" 
-        title="Username must be 4-20 letters or numbers"
-        required>
-    </div>
-    <div class="helper">Username: 4–20 letters or numbers</div>
-
-    <div class="input-group">
-      <i class="fas fa-lock"></i>
-      <input type="password" name="password" placeholder="Password" required>
-    </div>
-
-    <div class="input-group">
-      <i class="fas fa-lock"></i>
-      <input type="password" name="confirm_password" placeholder="Confirm Password" required>
-    </div>
-
-    <button type="submit">
-      <i class="fas fa-user-plus"></i> Sign Up
-    </button>
-
-  </form>
-
-  {% if error %}
-    <div class="error">{{ error }}</div>
-  {% endif %}
-
-  <div class="login-link">
-    <a href="/"><i class="fas fa-sign-in-alt"></i> Already have an account? Login</a>
+    <h2>
+      <i class="fas fa-camera"></i>
+      SnapHire
+    </h2>
+    <p class="subtitle">Welcome back! Please login to your account</p>
   </div>
 
+  {% if error %}
+    <div class="error">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ error }}
+    </div>
+  {% endif %}
+
+  <form method="POST" action="/" id="loginForm">
+    <div class="input-group">
+      <i class="fas fa-user"></i>
+      <input type="text" name="username" placeholder="Username" required autofocus>
+    </div>
+
+    <div class="input-group">
+      <i class="fas fa-lock"></i>
+      <input type="password" id="password" name="password" placeholder="Password" required>
+      <i class="fas fa-eye toggle-password" onclick="togglePassword()"></i>
+    </div>
+
+    <div class="forgot-link">
+      <a href="#">Forgot Password?</a>
+    </div>
+
+    <button type="submit" class="login-btn">
+      <i class="fas fa-sign-in-alt"></i> Login
+    </button>
+  </form>
+
+  <div class="signup-link">
+    <a href="/signup">
+      <i class="fas fa-user-plus"></i> Don't have an account? Sign Up
+    </a>
+  </div>
 </div>
+
+<script>
+// Toggle password visibility
+function togglePassword() {
+  const password = document.getElementById("password");
+  const icon = document.querySelector(".toggle-password");
+  
+  if (password.type === "password") {
+    password.type = "text";
+    icon.classList.remove("fa-eye");
+    icon.classList.add("fa-eye-slash");
+  } else {
+    password.type = "password";
+    icon.classList.remove("fa-eye-slash");
+    icon.classList.add("fa-eye");
+  }
+}
+
+// Create floating particles
+function createParticles() {
+  for (let i = 0; i < 40; i++) {
+    const particle = document.createElement('div');
+    particle.classList.add('particle');
+    const size = Math.random() * 8 + 2;
+    particle.style.width = size + 'px';
+    particle.style.height = size + 'px';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.top = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 10 + 's';
+    particle.style.animationDuration = Math.random() * 15 + 10 + 's';
+    document.body.appendChild(particle);
+  }
+}
+
+createParticles();
+</script>
 
 </body>
 </html>

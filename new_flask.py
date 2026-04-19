@@ -6,6 +6,7 @@ import uuid
 import os
 from datetime import datetime
 import time
+from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "secret_key_123")
@@ -33,6 +34,25 @@ else:
     DB_PORT = int(DB_PORT) if DB_PORT else 3306
     print(f"📊 Cloud DB Connected → {DB_HOST}:{DB_PORT} | {DB_NAME}")
 
+# ---------------- DECORATORS FOR AUTH ----------------
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_id" not in session:
+            flash("Please login to access this page", "error")
+            return redirect("/")
+        return f(*args, **kwargs)
+    return decorated_function
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "admin_id" not in session:
+            flash("Please login as admin to access this page", "error")
+            return redirect("/admin/login")
+        return f(*args, **kwargs)
+    return decorated_function
+
 # ---------------- DATABASE CONNECTION WITH RETRY ----------------
 def get_db():
     if "db" not in g:
@@ -52,7 +72,6 @@ def get_db():
                     'connection_timeout': 30
                 }
 
-                # ✅ FIXED: Disable SSL for Railway (SSL causes connection failure)
                 if ON_RENDER:
                     config['ssl_disabled'] = True
 
@@ -89,7 +108,7 @@ def test_db():
         if not db:
             return jsonify({
                 "status": "error",
-                "message": "Connection failed - check Render logs for details",
+                "message": "Connection failed",
                 "host": DB_HOST,
                 "port": DB_PORT,
                 "user": DB_USER,
@@ -125,6 +144,8 @@ def admin_login():
     if request.method == "POST":
         if request.form["username"] == "admin" and request.form["password"] == "admin123":
             session["admin_id"] = 1
+            session["admin_username"] = "admin"
+            flash("Welcome back, Admin!", "success")
             return redirect("/admin/dashboard")
         else:
             return render_template("admin_login.html", error="Invalid credentials")
@@ -144,6 +165,11 @@ def signup():
             return redirect("/signup")
         cursor = db.cursor()
         try:
+            # Check if password and confirm password match
+            if request.form["password"] != request.form["confirm_password"]:
+                flash("Passwords do not match!", "error")
+                return redirect("/signup")
+            
             cursor.execute("""
                 INSERT INTO users (first_name, last_name, email, mobile, gender, username, password, role)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, 'user')
@@ -158,6 +184,7 @@ def signup():
             ))
             db.commit()
             flash("Signup successful! Please login.", "success")
+            return redirect("/")
         except Exception as e:
             print("Signup Error:", e)
             db.rollback()
@@ -165,7 +192,6 @@ def signup():
             return redirect("/signup")
         finally:
             cursor.close()
-        return redirect("/")
     return render_template("signup.html")
 
 # ---------------- LOGIN ----------------
@@ -193,16 +219,16 @@ def login():
         if user:
             session["user_id"] = user["id"]
             session["username"] = user["username"]
+            session["user_name"] = f"{user['first_name']} {user['last_name']}"
+            flash(f"Welcome back, {user['first_name']}!", "success")
             return redirect("/home")
-        return render_template("login.html", error="Invalid login")
+        return render_template("login.html", error="Invalid username or password")
     return render_template("login.html")
 
 # ---------------- HOME ----------------
 @app.route("/home")
+@login_required
 def home():
-    if "user_id" not in session:
-        return redirect("/")
-
     db = get_db()
     if not db:
         flash("Database connection error", "error")
@@ -258,9 +284,8 @@ def home():
 
 # ---------------- CART ----------------
 @app.route("/cart", methods=["GET", "POST"])
+@login_required
 def cart():
-    if "user_id" not in session:
-        return redirect("/")
     user_id = session.get("user_id")
     db = get_db()
     if not db:
@@ -309,10 +334,10 @@ def cart():
         cursor.execute("""
             SELECT id, CONCAT(first_name, ' ', last_name) AS name, rating, status
             FROM photographers
+            WHERE status = 'active'
             ORDER BY rating DESC
         """)
         photographers = cursor.fetchall()
-        print("DEBUG photographers:", photographers)
 
         total = sum(item["package_price"] * item["quantity"] for item in cart_items)
     except Exception as e:
@@ -328,10 +353,8 @@ def cart():
 
 # ---------------- ADD TO CART ----------------
 @app.route("/add_package/<int:package_id>", methods=["POST"])
+@login_required
 def add_package(package_id):
-    if "user_id" not in session:
-        return jsonify({"status": "error", "message": "Not logged in"})
-    
     db = get_db()
     if not db:
         return jsonify({"status": "error", "message": "Database error"})
@@ -353,7 +376,7 @@ def add_package(package_id):
                 VALUES (%s,%s,1)
             """, (session["user_id"], package_id))
         db.commit()
-        return jsonify({"status": "success"})
+        return jsonify({"status": "success", "message": "Package added to cart"})
     except Exception as e:
         print("Add to Cart Error:", e)
         db.rollback()
@@ -363,10 +386,8 @@ def add_package(package_id):
 
 # ---------------- REMOVE ITEM ----------------
 @app.route("/remove/<int:id>", methods=["POST"])
+@login_required
 def remove(id):
-    if "user_id" not in session:
-        return redirect("/")
-    
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -388,19 +409,19 @@ def remove(id):
                 cursor.execute("DELETE FROM user_packages WHERE id=%s AND user_id=%s",
                                (id, session["user_id"]))
         db.commit()
+        flash("Item removed from cart", "success")
     except Exception as e:
         print("Remove Error:", e)
         db.rollback()
+        flash("Error removing item", "error")
     finally:
         cursor.close()
     return redirect("/cart")
 
 # ---------------- EMPTY CART ----------------
 @app.route("/empty_cart", methods=["POST"])
+@login_required
 def empty_cart():
-    if "user_id" not in session:
-        return redirect("/")
-    
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -421,10 +442,8 @@ def empty_cart():
 
 # ---------------- UPDATE INDIVIDUAL CART ITEM ----------------
 @app.route("/update_item/<int:item_id>", methods=["POST"])
+@login_required
 def update_item(item_id):
-    if "user_id" not in session:
-        return redirect("/")
-    
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -458,10 +477,8 @@ def update_item(item_id):
 
 # ---------------- EDIT PROFILE ----------------
 @app.route("/edit-profile", methods=["GET", "POST"])
+@login_required
 def edit_profile():
-    if "user_id" not in session:
-        return redirect("/")
-    
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -526,10 +543,8 @@ def get_hired():
 
 #------------------ Orders Route--------
 @app.route("/orders")
+@login_required
 def orders():
-    if "user_id" not in session:
-        return redirect("/")
-
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -553,12 +568,10 @@ def orders():
 
     return render_template("orders.html", orders=orders)
 
-#------------------ Order Details (UPDATED WITH DECIMAL HANDLING) ----------------
+#------------------ Order Details ----------------
 @app.route("/order_details/<string:order_id>")
+@login_required
 def order_details(order_id):
-    if "user_id" not in session:
-        return redirect("/")
-
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -567,7 +580,6 @@ def order_details(order_id):
     cursor = db.cursor(dictionary=True)
 
     try:
-        # First, check if order exists and belongs to user
         cursor.execute("""
             SELECT 
                 order_id,
@@ -587,7 +599,6 @@ def order_details(order_id):
             cursor.close()
             return render_template("order_details.html", order=None, items=[], subtotal=0, gst_amount=0, service_charge=0, grand_total=0)
 
-        # Fetch order items
         cursor.execute("""
             SELECT 
                 oi.package_name,
@@ -604,14 +615,12 @@ def order_details(order_id):
         
         items = cursor.fetchall()
         
-        # Calculate subtotal - Convert Decimal to float for calculation
         subtotal = 0.0
         for item in items:
             price = float(item["price"]) if item["price"] else 0
             quantity = int(item["quantity"]) if item["quantity"] else 0
             subtotal += price * quantity
         
-        # Calculate GST (18%) and Service Charge (5%) using float
         gst_amount = subtotal * 0.18
         service_charge = subtotal * 0.05
         grand_total = subtotal + gst_amount + service_charge
@@ -637,6 +646,7 @@ def order_details(order_id):
         service_charge=service_charge,
         grand_total=grand_total
     )
+
 # ---------------- PHOTOGRAPHER APPLY ----------------
 @app.route("/photographer/apply", methods=["POST"])
 def apply_photographer():
@@ -677,10 +687,8 @@ def photographer_submitted():
 
 # ---------------- ADMIN DASHBOARD ----------------
 @app.route("/admin/dashboard")
+@admin_required
 def admin_dashboard():
-    if "admin_id" not in session:
-        return redirect("/admin/login")
-    
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -692,7 +700,7 @@ def admin_dashboard():
         cursor.execute("SELECT COUNT(*) as count FROM orders")
         total_orders = cursor.fetchone()["count"]
         
-        cursor.execute("SELECT SUM(total_price) as total FROM orders WHERE status = 'Confirmed'")
+        cursor.execute("SELECT COALESCE(SUM(total_price), 0) as total FROM orders WHERE status = 'Confirmed'")
         revenue_result = cursor.fetchone()
         revenue = revenue_result["total"] if revenue_result["total"] else 0
         
@@ -739,10 +747,8 @@ def admin_dashboard():
 
 # ---------------- ADMIN ORDER DETAILS ----------------
 @app.route("/admin/order_details/<string:order_id>")
+@admin_required
 def admin_order_details(order_id):
-    if "admin_id" not in session:
-        return redirect("/admin/login")
-    
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -784,10 +790,8 @@ def admin_order_details(order_id):
 
 # ---------------- ADMIN PHOTOGRAPHERS ----------------
 @app.route("/admin/photographers")
+@admin_required
 def admin_photographers():
-    if "admin_id" not in session:
-        return redirect("/admin/login")
-    
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -806,10 +810,8 @@ def admin_photographers():
 
 # ---------------- ADMIN APPROVE PHOTOGRAPHER ----------------
 @app.route("/admin/approve/<int:id>", methods=["POST"])
+@admin_required
 def approve_photographer(id):
-    if "admin_id" not in session:
-        return redirect("/admin/login")
-    
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -835,10 +837,8 @@ def approve_photographer(id):
 
 # ---------------- ADMIN REJECT PHOTOGRAPHER ----------------
 @app.route("/admin/reject/<int:id>", methods=["POST"])
+@admin_required
 def reject_photographer(id):
-    if "admin_id" not in session:
-        return redirect("/admin/login")
-    
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -859,10 +859,8 @@ def reject_photographer(id):
 
 # ---------------- ADMIN ORDERS ----------------
 @app.route("/admin/orders")
+@admin_required
 def admin_orders():
-    if "admin_id" not in session:
-        return redirect("/admin/login")
-    
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -887,10 +885,8 @@ def admin_orders():
 
 # ---------------- ADMIN UPDATE ORDER STATUS ----------------
 @app.route("/admin/update_order_status/<string:order_id>", methods=["POST"])
+@admin_required
 def update_order_status(order_id):
-    if "admin_id" not in session:
-        return redirect("/admin/login")
-    
     new_status = request.form.get("status")
     db = get_db()
     if not db:
@@ -912,10 +908,8 @@ def update_order_status(order_id):
 
 # ---------------- ADMIN PACKAGES ----------------
 @app.route("/admin/packages", methods=["GET", "POST"])
+@admin_required
 def admin_packages():
-    if "admin_id" not in session:
-        return redirect("/admin/login")
-    
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -953,10 +947,8 @@ def admin_packages():
 
 # ---------------- DELETE PACKAGE ----------------
 @app.route("/admin/delete_package/<int:id>", methods=["POST"])
+@admin_required
 def delete_package(id):
-    if "admin_id" not in session:
-        return redirect("/admin/login")
-    
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -978,10 +970,8 @@ def delete_package(id):
 
 # ---------------- EDIT PACKAGE ----------------
 @app.route("/admin/edit_package/<int:id>", methods=["GET", "POST"])
+@admin_required
 def edit_package(id):
-    if "admin_id" not in session:
-        return redirect("/admin/login")
-    
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -1020,10 +1010,8 @@ def edit_package(id):
 
 # ---------------- ADMIN USERS ----------------
 @app.route("/admin/users")
+@admin_required
 def admin_users():
-    if "admin_id" not in session:
-        return redirect("/admin/login")
-    
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -1042,10 +1030,8 @@ def admin_users():
 
 # ---------------- DELETE USER ----------------
 @app.route("/admin/delete_user/<int:id>", methods=["POST"])
+@admin_required
 def delete_user(id):
-    if "admin_id" not in session:
-        return redirect("/admin/login")
-    
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -1075,10 +1061,8 @@ def order_success():
 
 #----------------- Check Out Route ----------------
 @app.route("/checkout", methods=["GET", "POST"])
+@login_required
 def checkout():
-    if "user_id" not in session:
-        return redirect("/")
-
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -1171,6 +1155,7 @@ def checkout():
             db.commit()
             cursor.close()
             
+            flash("🎉 Order placed successfully!", "success")
             return redirect(f"/order-success?order_id={order_code}&total={total}")
             
         except Exception as e:
@@ -1182,10 +1167,8 @@ def checkout():
 
 # ---------------- ADMIN EDIT PHOTOGRAPHER ----------------
 @app.route("/admin/edit_photographer/<int:id>", methods=["GET", "POST"])
+@admin_required
 def edit_photographer(id):
-    if "admin_id" not in session:
-        return redirect("/admin/login")
-    
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -1218,7 +1201,6 @@ def edit_photographer(id):
             flash("❌ Error updating photographer", "error")
             return redirect(f"/admin/edit_photographer/{id}")
     
-    # GET request - fetch photographer details
     try:
         cursor.execute("SELECT * FROM photographers WHERE id=%s", (id,))
         photographer = cursor.fetchone()
@@ -1236,10 +1218,8 @@ def edit_photographer(id):
 
 # ---------------- ADMIN DELETE PHOTOGRAPHER ----------------
 @app.route("/admin/delete_photographer/<int:id>", methods=["POST"])
+@admin_required
 def delete_photographer(id):
-    if "admin_id" not in session:
-        return redirect("/admin/login")
-    
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -1267,10 +1247,8 @@ def delete_photographer(id):
 
 # ---------------- ADMIN VIEW USER ----------------
 @app.route('/admin/view_user/<int:user_id>')
+@admin_required
 def view_user(user_id):
-    if 'admin_id' not in session:
-        return redirect('/admin/login')
-
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -1306,6 +1284,7 @@ def view_user(user_id):
 @app.route("/logout")
 def logout():
     session.clear()
+    flash("You have been logged out successfully.", "success")
     return redirect("/")
 
 # ---------------- RUN APP ----------------

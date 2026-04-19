@@ -17,11 +17,61 @@
 html, body {
   margin: 0;
   font-family: 'Segoe UI', Arial, sans-serif;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, 
+    #ff7f50, #ff9966, #ff6b6b, #c06c84, 
+    #6c5b7b, #355c7d, #2193b0, #ff7f50);
+  background-size: 400% 400%;
   min-height: 100vh;
-  animation: fadeIn 0.6s ease;
+  animation: gradientShift 4s ease infinite, fadeIn 0.6s ease;
   overflow-x: hidden;
   width: 100%;
+  position: relative;
+}
+
+/* Fast 7-color smooth gradient animation */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  14% { background-position: 20% 50%; }
+  28% { background-position: 40% 50%; }
+  42% { background-position: 60% 50%; }
+  57% { background-position: 80% 50%; }
+  71% { background-position: 100% 50%; }
+  85% { background-position: 80% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Animated background overlay */
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 60%);
+  pointer-events: none;
+  animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+/* Floating particles */
+.particle {
+  position: absolute;
+  background: rgba(255,255,255,0.15);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: float 10s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+  25% { opacity: 0.3; }
+  50% { transform: translateY(-50px) translateX(30px); opacity: 0.5; }
+  75% { opacity: 0.3; }
 }
 
 @keyframes fadeIn {
@@ -29,9 +79,10 @@ html, body {
   to { opacity: 1; }
 }
 
-/* HEADER - Responsive */
+/* HEADER - Responsive with glass morphism */
 header {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(10px);
   color: white;
   padding: clamp(15px, 4vw, 20px) clamp(20px, 5vw, 30px);
   display: flex;
@@ -43,6 +94,7 @@ header {
   z-index: 100;
   flex-wrap: wrap;
   gap: 15px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
 header h1 {
@@ -55,6 +107,12 @@ header h1 {
 
 header h1 i {
   font-size: clamp(24px, 6vw, 28px);
+  animation: bounce 2s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 }
 
 .header-buttons {
@@ -64,7 +122,7 @@ header h1 i {
 }
 
 .header-btn {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.15);
   color: white;
   text-decoration: none;
   padding: clamp(6px, 2vw, 8px) clamp(12px, 4vw, 16px);
@@ -81,16 +139,18 @@ header h1 i {
   transform: translateY(-2px);
 }
 
-/* CONTAINER - Responsive */
+/* CONTAINER - Glass Morphism */
 .container {
   max-width: 550px;
   width: min(90%, 550px);
   margin: clamp(30px, 8vw, 60px) auto;
-  background: white;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
   padding: clamp(25px, 6vw, 40px);
-  border-radius: 24px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  border-radius: 28px;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.25);
   animation: slideUp 0.5s ease;
+  border: 1px solid rgba(255,255,255,0.2);
 }
 
 @keyframes slideUp {
@@ -108,16 +168,24 @@ header h1 i {
   width: clamp(60px, 15vw, 80px);
   height: clamp(60px, 15vw, 80px);
   background: linear-gradient(135deg, #ff7f50, #ff6347);
+  background-size: 200% 200%;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 15px;
+  animation: iconGradient 3s ease infinite;
+}
+
+@keyframes iconGradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 .profile-icon i {
   font-size: clamp(30px, 8vw, 40px);
   color: white;
+  animation: bounce 2s ease infinite;
 }
 
 h2 {
@@ -163,11 +231,13 @@ input, select {
   transition: all 0.3s ease;
   font-family: inherit;
   outline: none;
+  background: white;
 }
 
 input:focus, select:focus {
   border-color: #ff7f50;
   box-shadow: 0 0 0 3px rgba(255,127,80,0.1);
+  transform: translateY(-1px);
 }
 
 input:hover, select:hover {
@@ -194,11 +264,12 @@ input:hover, select:hover {
 
 .helper i {
   font-size: 10px;
+  color: #ff7f50;
 }
 
 /* PASSWORD NOTE */
 .password-note {
-  background: #f8f9fa;
+  background: rgba(248,249,250,0.8);
   padding: clamp(8px, 2.5vw, 10px) clamp(12px, 3.5vw, 15px);
   border-radius: 10px;
   margin-top: 10px;
@@ -214,7 +285,7 @@ input:hover, select:hover {
   color: #ff7f50;
 }
 
-/* BUTTONS - Responsive */
+/* BUTTONS - Animated */
 .btn-group {
   display: flex;
   gap: 15px;
@@ -226,8 +297,9 @@ button {
   flex: 1;
   padding: clamp(12px, 3.5vw, 14px);
   border: none;
-  border-radius: 12px;
+  border-radius: 30px;
   background: linear-gradient(135deg, #2ecc71, #27ae60);
+  background-size: 200% 200%;
   color: white;
   font-weight: bold;
   font-size: clamp(14px, 4vw, 16px);
@@ -237,11 +309,17 @@ button {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  animation: buttonGradient 3s ease infinite;
+}
+
+@keyframes buttonGradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(46,204,113,0.3);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 25px rgba(46,204,113,0.4);
 }
 
 button:active {
@@ -259,9 +337,10 @@ button:disabled {
   text-align: center;
   text-decoration: none;
   background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+  background-size: 200% 200%;
   color: white;
   padding: clamp(12px, 3.5vw, 14px);
-  border-radius: 12px;
+  border-radius: 30px;
   font-weight: bold;
   font-size: clamp(14px, 4vw, 16px);
   transition: all 0.3s ease;
@@ -269,12 +348,13 @@ button:disabled {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  animation: buttonGradient 3s ease infinite;
 }
 
 .back-btn:hover {
   background: linear-gradient(135deg, #ff7f50, #ff6347);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(255,127,80,0.3);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 25px rgba(255,127,80,0.4);
 }
 
 /* ALERT MESSAGES */
@@ -303,13 +383,13 @@ button:disabled {
 .alert-success {
   background: #d4edda;
   color: #155724;
-  border: 1px solid #c3e6cb;
+  border-left: 4px solid #28a745;
 }
 
 .alert-error {
   background: #f8d7da;
   color: #721c24;
-  border: 1px solid #f5c6cb;
+  border-left: 4px solid #dc3545;
 }
 
 .alert i {
@@ -386,11 +466,18 @@ button:disabled {
 
 /* PRINT STYLES */
 @media print {
-  .header-buttons, .btn-group, .back-btn {
+  body::before, .particle, .header-buttons, .btn-group, .back-btn {
     display: none;
   }
   
+  body {
+    background: white;
+    animation: none;
+  }
+  
   .container {
+    background: white;
+    backdrop-filter: none;
     box-shadow: none;
     margin: 0;
     padding: 20px;
@@ -553,6 +640,24 @@ button:disabled {
 </div>
 
 <script>
+// Create floating particles
+function createParticles() {
+  for (let i = 0; i < 40; i++) {
+    const particle = document.createElement('div');
+    particle.classList.add('particle');
+    const size = Math.random() * 6 + 2;
+    particle.style.width = size + 'px';
+    particle.style.height = size + 'px';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.top = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 10 + 's';
+    particle.style.animationDuration = Math.random() * 15 + 8 + 's';
+    document.body.appendChild(particle);
+  }
+}
+
+createParticles();
+
 // Form validation
 document.getElementById('profileForm')?.addEventListener('submit', function(e) {
   const mobile = document.querySelector('input[name="mobile"]').value;
@@ -579,6 +684,20 @@ document.getElementById('profileForm')?.addEventListener('submit', function(e) {
   submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
   submitBtn.disabled = true;
 });
+
+// Auto-hide flash messages after 3 seconds
+setTimeout(function() {
+  const alerts = document.querySelectorAll('.alert');
+  alerts.forEach(function(alert) {
+    alert.style.transition = 'opacity 0.5s ease';
+    alert.style.opacity = '0';
+    setTimeout(function() {
+      if (alert.parentNode) {
+        alert.parentNode.removeChild(alert);
+      }
+    }, 500);
+  });
+}, 3000);
 </script>
 
 </body>

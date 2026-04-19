@@ -12,12 +12,62 @@
 /* BASE */
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, 
+    #ff7f50, #ff9966, #ff6b6b, #c06c84, 
+    #6c5b7b, #355c7d, #2193b0, #ff7f50);
+  background-size: 400% 400%;
   margin: 0;
-  animation: fadeIn 0.6s ease;
+  animation: gradientShift 4s ease infinite, fadeIn 0.6s ease;
   min-height: 100vh;
   overflow-x: hidden;
   width: 100%;
+  position: relative;
+}
+
+/* Fast 7-color smooth gradient animation */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  14% { background-position: 20% 50%; }
+  28% { background-position: 40% 50%; }
+  42% { background-position: 60% 50%; }
+  57% { background-position: 80% 50%; }
+  71% { background-position: 100% 50%; }
+  85% { background-position: 80% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Animated background overlay */
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 60%);
+  pointer-events: none;
+  animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+/* Floating particles */
+.particle {
+  position: absolute;
+  background: rgba(255,255,255,0.15);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: float 10s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+  25% { opacity: 0.3; }
+  50% { transform: translateY(-50px) translateX(30px); opacity: 0.5; }
+  75% { opacity: 0.3; }
 }
 
 @keyframes fadeIn {
@@ -25,7 +75,7 @@ body {
   to {opacity:1; transform: translateY(0);}
 }
 
-/* HEADER - Responsive */
+/* HEADER - Responsive with glass morphism */
 header {
   background: rgba(255,255,255,0.95);
   backdrop-filter: blur(10px);
@@ -52,12 +102,19 @@ header {
 
 .logo i {
   font-size: clamp(20px, 6vw, 26px);
+  animation: bounce 2s ease infinite;
 }
 
-/* BUTTON - Responsive */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* BUTTON - Animated */
 .back-btn {
   text-decoration: none;
   background: linear-gradient(135deg, #ff7f50, #ff6347);
+  background-size: 200% 200%;
   color: white;
   padding: clamp(8px, 2.5vw, 12px) clamp(15px, 4vw, 22px);
   border-radius: 25px;
@@ -68,6 +125,12 @@ header {
   box-shadow: 0 8px 20px rgba(255,127,80,0.3);
   transition: all 0.3s ease;
   font-size: clamp(12px, 3.5vw, 14px);
+  animation: buttonGradient 3s ease infinite;
+}
+
+@keyframes buttonGradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 .back-btn:hover {
@@ -90,34 +153,38 @@ header {
 h1 {
   text-align: center;
   margin-bottom: clamp(25px, 6vw, 35px);
-  color: #333;
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
   font-size: clamp(24px, 6vw, 32px);
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
 }
 
 h1 i {
   color: #ff7f50;
   font-size: clamp(28px, 7vw, 36px);
+  animation: bounce 2s ease infinite;
 }
 
-/* ORDER CARD - Responsive */
+/* ORDER CARD - Glass Morphism */
 .order {
-  background: white;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
   padding: clamp(18px, 4vw, 25px);
-  border-radius: 15px;
+  border-radius: 20px;
   margin-bottom: 20px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.2);
 }
 
 .order:hover {
-  transform: translateY(-6px) scale(1.01);
-  box-shadow: 0 18px 35px rgba(0,0,0,0.15);
+  transform: translateY(-8px) scale(1.01);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
 }
 
 /* glow effect */
@@ -172,6 +239,7 @@ h1 i {
   border-radius: 20px;
   font-size: clamp(11px, 3vw, 13px);
   font-weight: bold;
+  transition: all 0.3s ease;
 }
 
 .status.pending {
@@ -199,7 +267,7 @@ h1 i {
   color: #2ecc71;
 }
 
-/* VIEW BUTTON - Responsive */
+/* VIEW BUTTON - Animated */
 .view-btn {
   display: inline-flex;
   align-items: center;
@@ -207,9 +275,10 @@ h1 i {
   margin-top: 12px;
   text-decoration: none;
   background: linear-gradient(135deg, #333, #555);
+  background-size: 200% 200%;
   color: white;
   padding: clamp(8px, 2.5vw, 10px) clamp(14px, 4vw, 18px);
-  border-radius: 8px;
+  border-radius: 25px;
   font-size: clamp(12px, 3.5vw, 14px);
   transition: all 0.3s ease;
   font-weight: 500;
@@ -217,23 +286,34 @@ h1 i {
 
 .view-btn:hover {
   background: linear-gradient(135deg, #ff7f50, #ff6347);
-  transform: translateX(5px);
+  background-size: 200% 200%;
+  transform: translateX(5px) translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255,127,80,0.4);
 }
 
-/* empty state - Responsive */
+/* empty state - Glass Morphism */
 .empty {
   text-align: center;
   margin-top: clamp(40px, 10vw, 80px);
   padding: clamp(30px, 8vw, 60px) 20px;
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
 }
 
 .empty i {
   font-size: clamp(60px, 15vw, 80px);
-  color: #ddd;
+  color: #ff7f50;
   margin-bottom: 20px;
+  animation: bounce 2s ease infinite;
+}
+
+.empty h3 {
+  font-size: clamp(20px, 5vw, 24px);
+  color: #333;
+  margin-bottom: 10px;
 }
 
 .empty p {
@@ -249,26 +329,29 @@ h1 i {
   margin-top: 25px;
   text-decoration: none;
   background: linear-gradient(135deg, #ff7f50, #ff6347);
+  background-size: 200% 200%;
   color: white;
   padding: clamp(10px, 3vw, 14px) clamp(20px, 5vw, 28px);
   border-radius: 30px;
   font-weight: bold;
   transition: all 0.3s ease;
   font-size: clamp(13px, 3.5vw, 15px);
+  animation: buttonGradient 3s ease infinite;
 }
 
 .shop-link:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(255,127,80,0.3);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 10px 25px rgba(255,127,80,0.4);
 }
 
 /* FOOTER */
 footer {
   text-align: center;
   padding: 20px;
-  color: #888;
+  color: rgba(255,255,255,0.8);
   margin-top: 40px;
   font-size: clamp(11px, 3vw, 14px);
+  background: rgba(0,0,0,0.2);
 }
 
 /* RESPONSIVE BREAKPOINTS */
@@ -330,14 +413,21 @@ footer {
 
 /* PRINT STYLES */
 @media print {
-  .back-btn, footer {
+  body::before, .particle, .back-btn, footer {
     display: none;
+  }
+  
+  body {
+    background: white;
+    animation: none;
   }
   
   .order {
     break-inside: avoid;
     box-shadow: none;
     border: 1px solid #ddd;
+    background: white;
+    backdrop-filter: none;
   }
   
   .status {
@@ -442,6 +532,26 @@ footer {
 <footer>
   <p>&copy; 2026 SnapHire. All rights reserved. | <i class="fas fa-camera"></i> Capturing your special moments</p>
 </footer>
+
+<script>
+// Create floating particles
+function createParticles() {
+  for (let i = 0; i < 40; i++) {
+    const particle = document.createElement('div');
+    particle.classList.add('particle');
+    const size = Math.random() * 6 + 2;
+    particle.style.width = size + 'px';
+    particle.style.height = size + 'px';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.top = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 10 + 's';
+    particle.style.animationDuration = Math.random() * 15 + 8 + 's';
+    document.body.appendChild(particle);
+  }
+}
+
+createParticles();
+</script>
 
 </body>
 </html>
