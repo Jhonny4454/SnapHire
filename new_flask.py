@@ -1,36 +1,117 @@
-
-# ---------------- DATABASE CONFIG ----------------
-
-
 from flask import Flask, render_template, request, redirect, session, g, jsonify, flash
 import mysql.connector
+from mysql.connector import Error
 import hashlib
 import uuid
 import os
 from datetime import datetime
-import ssl
+import time
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "secret_key_123")
 
 # ---------------- DATABASE CONFIG ----------------
+DB_HOST = os.getenv("DB_HOST")
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASS = os.getenv("DB_PASS")
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = int(os.getenv("DB_PORT", 3306))
+DB_PORT = os.getenv("DB_PORT")
 
-# fallback for local
-if not DB_HOST:
+# Detect cloud (Render/Railway/etc.)
+ON_RENDER = DB_HOST is not None
+
+# Fallback for local development
+if not all([DB_HOST, DB_NAME, DB_USER, DB_PASS]):
+    print("⚠️ Running locally (MySQL localhost)")
+    DB_HOST = "localhost"
     DB_NAME = "sumedh"
     DB_USER = "root"
     DB_PASS = "sumedh2004"
-    DB_HOST = "localhost"
     DB_PORT = 3306
-    print("⚠️ Running locally")
+    ON_RENDER = False
 else:
-    print(f"📊 Connecting to DB: {DB_HOST}:{DB_PORT} - {DB_NAME}")
-#--------------- Admin Login-----------
+    DB_PORT = int(DB_PORT) if DB_PORT else 3306
+    print(f"📊 Cloud DB Connected → {DB_HOST}:{DB_PORT} | {DB_NAME}")
+
+# ---------------- DATABASE CONNECTION WITH RETRY ----------------
+def get_db():
+    if "db" not in g:
+        max_retries = 3
+        retry_delay = 2
+
+        for attempt in range(max_retries):
+            try:
+                config = {
+                    'host': DB_HOST,
+                    'user': DB_USER,
+                    'password': DB_PASS,
+                    'database': DB_NAME,
+                    'port': DB_PORT,
+                    'autocommit': False,
+                    'use_pure': True,
+                    'connection_timeout': 30
+                }
+
+                # SSL for cloud databases
+                if ON_RENDER:
+                    config['ssl_disabled'] = False
+                    config['ssl_verify_cert'] = False
+
+                g.db = mysql.connector.connect(**config)
+                print("✅ Database connected successfully")
+                break
+
+            except Error as e:
+                print(f"❌ DB Connection attempt {attempt + 1} failed: {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                else:
+                    print("❌ All connection attempts failed")
+                    return None
+
+            except Exception as e:
+                print(f"❌ Unexpected error: {e}")
+                return None
+
+    return g.db
+
+# ---------------- CLOSE DB ----------------
+@app.teardown_appcontext
+def close_db(exception):
+    db = g.pop("db", None)
+    if db is not None and db.is_connected():
+        db.close()
+
+# ---------------- TEST DATABASE ROUTE ----------------
+@app.route("/test-db")
+def test_db():
+    try:
+        db = get_db()
+        if not db:
+            return jsonify({
+                "status": "error",
+                "message": "Database connection failed"
+            }), 500
+
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT 1 as test")
+        result = cursor.fetchone()
+        cursor.close()
+
+        return jsonify({
+            "status": "success",
+            "message": "Database connected!",
+            "host": DB_HOST,
+            "database": DB_NAME,
+            "result": result
+        })
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+# ---------------- Admin Login ----------------
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
@@ -40,31 +121,6 @@ def admin_login():
         else:
             return render_template("admin_login.html", error="Invalid credentials")
     return render_template("admin_login.html")
-
-
-def get_db():
-    if "db" not in g:
-        try:
-            g.db = mysql.connector.connect(
-                host=DB_HOST,
-                user=DB_USER,
-                password=DB_PASS,
-                database=DB_NAME,
-                port=DB_PORT,
-                autocommit=False
-            )
-            print("✅ Database connected")
-        except Exception as e:
-            print("❌ DB Error:", e)
-            return None
-    return g.db
-
-
-@app.teardown_appcontext
-def close_db(exception):
-    db = g.pop("db", None)
-    if db:
-        db.close()
 
 # ---------------- HASH PASSWORD ----------------
 def hash_password(password):
@@ -76,7 +132,8 @@ def signup():
     if request.method == "POST":
         db = get_db()
         if not db:
-            return "Database error"
+            flash("Database connection error. Please try again.", "error")
+            return redirect("/signup")
         cursor = db.cursor()
         try:
             cursor.execute("""
@@ -92,10 +149,14 @@ def signup():
                 hash_password(request.form["password"])
             ))
             db.commit()
+            flash("Signup successful! Please login.", "success")
         except Exception as e:
             print("Signup Error:", e)
-            return "Signup failed"
-        cursor.close()
+            db.rollback()
+            flash("Signup failed. Username or email may already exist.", "error")
+            return redirect("/signup")
+        finally:
+            cursor.close()
         return redirect("/")
     return render_template("signup.html")
 
@@ -105,14 +166,22 @@ def login():
     if request.method == "POST":
         db = get_db()
         if not db:
-            return "Database error"
+            flash("Database connection error", "error")
+            return render_template("login.html", error="System error. Please try again.")
+        
         cursor = db.cursor(dictionary=True)
-        cursor.execute(
-            "SELECT * FROM users WHERE username=%s AND password=%s",
-            (request.form["username"], hash_password(request.form["password"]))
-        )
-        user = cursor.fetchone()
-        cursor.close()
+        try:
+            cursor.execute(
+                "SELECT * FROM users WHERE username=%s AND password=%s",
+                (request.form["username"], hash_password(request.form["password"]))
+            )
+            user = cursor.fetchone()
+        except Exception as e:
+            print("Login Error:", e)
+            user = None
+        finally:
+            cursor.close()
+            
         if user:
             session["user_id"] = user["id"]
             session["username"] = user["username"]
@@ -127,39 +196,50 @@ def home():
         return redirect("/")
 
     db = get_db()
+    if not db:
+        flash("Database connection error", "error")
+        return redirect("/")
+        
     cursor = db.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM packages")
-    packages = cursor.fetchall()
+    try:
+        cursor.execute("SELECT * FROM packages")
+        packages = cursor.fetchall()
 
-    cursor.execute("""
-        SELECT 
-            p.package_name,
-            CONCAT(u.first_name, ' ', u.last_name) AS user_full_name,
-            r.rating,
-            r.comment,
-            r.created_at
-        FROM package_reviews r
-        JOIN users u ON r.user_id = u.id
-        JOIN packages p ON r.package_id = p.package_id
-        ORDER BY r.created_at DESC
-    """)
-    package_reviews = cursor.fetchall()
+        cursor.execute("""
+            SELECT 
+                p.package_name,
+                CONCAT(u.first_name, ' ', u.last_name) AS user_full_name,
+                r.rating,
+                r.comment,
+                r.created_at
+            FROM package_reviews r
+            JOIN users u ON r.user_id = u.id
+            JOIN packages p ON r.package_id = p.package_id
+            ORDER BY r.created_at DESC
+            LIMIT 10
+        """)
+        package_reviews = cursor.fetchall()
 
-    cursor.execute("""
-        SELECT 
-            o.order_id,
-            o.total_price,
-            o.status,
-            o.created_at
-        FROM orders o
-        WHERE o.user_id = %s
-        ORDER BY o.created_at DESC
-    """, (session["user_id"],))
-
-    orders = cursor.fetchall()
-
-    cursor.close()
+        cursor.execute("""
+            SELECT 
+                o.order_id,
+                o.total_price,
+                o.status,
+                o.created_at
+            FROM orders o
+            WHERE o.user_id = %s
+            ORDER BY o.created_at DESC
+            LIMIT 5
+        """, (session["user_id"],))
+        orders = cursor.fetchall()
+    except Exception as e:
+        print("Home Error:", e)
+        packages = []
+        package_reviews = []
+        orders = []
+    finally:
+        cursor.close()
 
     return render_template(
         "home.html",
@@ -175,12 +255,16 @@ def cart():
         return redirect("/")
     user_id = session.get("user_id")
     db = get_db()
+    if not db:
+        flash("Database connection error", "error")
+        return redirect("/home")
+        
     cursor = db.cursor(dictionary=True)
 
     if request.method == "POST":
-        for key, value in request.form.items():
-            if key.startswith("photographer_"):
-                try:
+        try:
+            for key, value in request.form.items():
+                if key.startswith("photographer_"):
                     cart_item_id = int(key.split("_")[1])
                     photographer_id = int(value) if value else None
                     location = request.form.get(f"location_{cart_item_id}", "")
@@ -190,86 +274,118 @@ def cart():
                         SET photographer_id=%s, location=%s, scheduled_date=%s
                         WHERE id=%s AND user_id=%s
                     """, (photographer_id, location, scheduled_date, cart_item_id, user_id))
-                except ValueError:
-                    continue
-        db.commit()
-        cursor.close()
-        flash("✅ Cart updated successfully!", "success")
+            db.commit()
+            flash("✅ Cart updated successfully!", "success")
+        except Exception as e:
+            print("Cart Update Error:", e)
+            db.rollback()
+            flash("❌ Error updating cart", "error")
+        finally:
+            cursor.close()
         return redirect("/cart")
 
     # Fetch cart items
-    cursor.execute("""
-        SELECT up.*, p.package_name, p.package_price, p.duration,
-               ph.id AS photographer_id,
-               CONCAT(ph.first_name, ' ', ph.last_name) AS photographer_name,
-               ph.rating AS photographer_rating
-        FROM user_packages up
-        JOIN packages p ON up.package_id = p.package_id
-        LEFT JOIN photographers ph ON up.photographer_id = ph.id
-        WHERE up.user_id = %s
-    """, (user_id,))
-    cart_items = cursor.fetchall()
+    try:
+        cursor.execute("""
+            SELECT up.*, p.package_name, p.package_price, p.duration,
+                   ph.id AS photographer_id,
+                   CONCAT(ph.first_name, ' ', ph.last_name) AS photographer_name,
+                   ph.rating AS photographer_rating
+            FROM user_packages up
+            JOIN packages p ON up.package_id = p.package_id
+            LEFT JOIN photographers ph ON up.photographer_id = ph.id
+            WHERE up.user_id = %s
+        """, (user_id,))
+        cart_items = cursor.fetchall()
 
-    # Fetch photographers for dropdown (only active ones)
-    cursor.execute("""
-        SELECT id, CONCAT(first_name, ' ', last_name) AS name, rating
-        FROM photographers
-        WHERE status = 'active' OR status IS NULL
-        ORDER BY rating DESC
-    """)
-    photographers = cursor.fetchall()
+        # Fetch photographers for dropdown
+        cursor.execute("""
+            SELECT id, CONCAT(first_name, ' ', last_name) AS name, rating
+            FROM photographers
+            WHERE status = 'active' OR status IS NULL
+            ORDER BY rating DESC
+        """)
+        photographers = cursor.fetchall()
 
-    total = sum(item["package_price"] * item["quantity"] for item in cart_items)
-    cursor.close()
+        total = sum(item["package_price"] * item["quantity"] for item in cart_items)
+    except Exception as e:
+        print("Cart Fetch Error:", e)
+        cart_items = []
+        photographers = []
+        total = 0
+        flash("Error loading cart", "error")
+    finally:
+        cursor.close()
+        
     return render_template("cart.html", cart_items=cart_items, total=total, photographers=photographers)
 
 # ---------------- ADD TO CART ----------------
 @app.route("/add_package/<int:package_id>", methods=["POST"])
 def add_package(package_id):
     if "user_id" not in session:
-        return jsonify({"status": "error"})
+        return jsonify({"status": "error", "message": "Not logged in"})
+    
     db = get_db()
+    if not db:
+        return jsonify({"status": "error", "message": "Database error"})
+        
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM user_packages WHERE user_id=%s AND package_id=%s",
-                   (session["user_id"], package_id))
-    existing = cursor.fetchone()
-    if existing:
-        cursor.execute("""
-            UPDATE user_packages 
-            SET quantity = quantity + 1 
-            WHERE user_id=%s AND package_id=%s
-        """, (session["user_id"], package_id))
-    else:
-        cursor.execute("""
-            INSERT INTO user_packages (user_id, package_id, quantity) 
-            VALUES (%s,%s,1)
-        """, (session["user_id"], package_id))
-    db.commit()
-    cursor.close()
-    return jsonify({"status": "success"})
+    try:
+        cursor.execute("SELECT * FROM user_packages WHERE user_id=%s AND package_id=%s",
+                       (session["user_id"], package_id))
+        existing = cursor.fetchone()
+        if existing:
+            cursor.execute("""
+                UPDATE user_packages 
+                SET quantity = quantity + 1 
+                WHERE user_id=%s AND package_id=%s
+            """, (session["user_id"], package_id))
+        else:
+            cursor.execute("""
+                INSERT INTO user_packages (user_id, package_id, quantity) 
+                VALUES (%s,%s,1)
+            """, (session["user_id"], package_id))
+        db.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        print("Add to Cart Error:", e)
+        db.rollback()
+        return jsonify({"status": "error", "message": str(e)})
+    finally:
+        cursor.close()
 
 # ---------------- REMOVE ITEM ----------------
 @app.route("/remove/<int:id>", methods=["POST"])
 def remove(id):
     if "user_id" not in session:
         return redirect("/")
+    
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/cart")
+        
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT quantity FROM user_packages WHERE id=%s AND user_id=%s",
-                   (id, session["user_id"]))
-    item = cursor.fetchone()
-    if item:
-        if item["quantity"] > 1:
-            cursor.execute("""
-                UPDATE user_packages 
-                SET quantity = quantity - 1 
-                WHERE id=%s AND user_id=%s
-            """, (id, session["user_id"]))
-        else:
-            cursor.execute("DELETE FROM user_packages WHERE id=%s AND user_id=%s",
-                           (id, session["user_id"]))
-    db.commit()
-    cursor.close()
+    try:
+        cursor.execute("SELECT quantity FROM user_packages WHERE id=%s AND user_id=%s",
+                       (id, session["user_id"]))
+        item = cursor.fetchone()
+        if item:
+            if item["quantity"] > 1:
+                cursor.execute("""
+                    UPDATE user_packages 
+                    SET quantity = quantity - 1 
+                    WHERE id=%s AND user_id=%s
+                """, (id, session["user_id"]))
+            else:
+                cursor.execute("DELETE FROM user_packages WHERE id=%s AND user_id=%s",
+                               (id, session["user_id"]))
+        db.commit()
+    except Exception as e:
+        print("Remove Error:", e)
+        db.rollback()
+    finally:
+        cursor.close()
     return redirect("/cart")
 
 # ---------------- EMPTY CART ----------------
@@ -277,11 +393,23 @@ def remove(id):
 def empty_cart():
     if "user_id" not in session:
         return redirect("/")
+    
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/cart")
+        
     cursor = db.cursor()
-    cursor.execute("DELETE FROM user_packages WHERE user_id=%s", (session["user_id"],))
-    db.commit()
-    cursor.close()
+    try:
+        cursor.execute("DELETE FROM user_packages WHERE user_id=%s", (session["user_id"],))
+        db.commit()
+        flash("Cart emptied successfully!", "success")
+    except Exception as e:
+        print("Empty Cart Error:", e)
+        db.rollback()
+        flash("Error emptying cart", "error")
+    finally:
+        cursor.close()
     return redirect("/cart")
 
 # ---------------- UPDATE INDIVIDUAL CART ITEM ----------------
@@ -291,6 +419,10 @@ def update_item(item_id):
         return redirect("/")
     
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/cart")
+        
     cursor = db.cursor()
     
     try:
@@ -313,8 +445,8 @@ def update_item(item_id):
         print("Update Error:", e)
         db.rollback()
         flash("❌ Error updating package details", "error")
-    
-    cursor.close()
+    finally:
+        cursor.close()
     return redirect("/cart")
 
 # ---------------- EDIT PROFILE ----------------
@@ -322,33 +454,51 @@ def update_item(item_id):
 def edit_profile():
     if "user_id" not in session:
         return redirect("/")
+    
     db = get_db()
-    cursor = db.cursor(dictionary=True)
-    if request.method == "POST":
-        cursor.execute("""
-            UPDATE users
-            SET first_name=%s,
-                last_name=%s,
-                email=%s,
-                mobile=%s,
-                gender=%s
-            WHERE id=%s
-        """, (
-            request.form["first_name"],
-            request.form["last_name"],
-            request.form["email"],
-            request.form["mobile"],
-            request.form["gender"],
-            session["user_id"]
-        ))
-        db.commit()
-        cursor.close()
-        flash("✅ Profile updated successfully!", "success")
+    if not db:
+        flash("Database error", "error")
         return redirect("/home")
-    cursor.execute("SELECT * FROM users WHERE id=%s", (session["user_id"],))
-    user = cursor.fetchone()
-    cursor.close()
-    return render_template("edit_profile.html", user=user)
+        
+    cursor = db.cursor(dictionary=True)
+    
+    if request.method == "POST":
+        try:
+            cursor.execute("""
+                UPDATE users
+                SET first_name=%s,
+                    last_name=%s,
+                    email=%s,
+                    mobile=%s,
+                    gender=%s
+                WHERE id=%s
+            """, (
+                request.form["first_name"],
+                request.form["last_name"],
+                request.form["email"],
+                request.form["mobile"],
+                request.form["gender"],
+                session["user_id"]
+            ))
+            db.commit()
+            flash("✅ Profile updated successfully!", "success")
+            return redirect("/home")
+        except Exception as e:
+            print("Profile Update Error:", e)
+            db.rollback()
+            flash("❌ Error updating profile", "error")
+        finally:
+            cursor.close()
+    else:
+        try:
+            cursor.execute("SELECT * FROM users WHERE id=%s", (session["user_id"],))
+            user = cursor.fetchone()
+        except Exception as e:
+            print("Profile Fetch Error:", e)
+            user = None
+        finally:
+            cursor.close()
+        return render_template("edit_profile.html", user=user)
 
 # ---------------- STATIC PAGES ----------------
 @app.route("/terms")
@@ -374,66 +524,84 @@ def orders():
         return redirect("/")
 
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/home")
+        
     cursor = db.cursor(dictionary=True)
 
-    cursor.execute("""
-        SELECT order_id, total_price, status, created_at, location, scheduled_date
-        FROM orders
-        WHERE user_id = %s
-        ORDER BY created_at DESC
-    """, (session["user_id"],))
-
-    orders = cursor.fetchall()
-    cursor.close()
+    try:
+        cursor.execute("""
+            SELECT order_id, total_price, status, created_at, location, scheduled_date
+            FROM orders
+            WHERE user_id = %s
+            ORDER BY created_at DESC
+        """, (session["user_id"],))
+        orders = cursor.fetchall()
+    except Exception as e:
+        print("Orders Error:", e)
+        orders = []
+    finally:
+        cursor.close()
 
     return render_template("orders.html", orders=orders)
 
-#------------------ Order Details (Using order_items table)--------
+#------------------ Order Details ----------------
 @app.route("/order_details/<string:order_id>")
 def order_details(order_id):
     if "user_id" not in session:
         return redirect("/")
 
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/orders")
+        
     cursor = db.cursor(dictionary=True)
 
-    cursor.execute("""
-        SELECT 
-            order_id,
-            total_price,
-            location,
-            scheduled_date,
-            payment_method,
-            status,
-            created_at
-        FROM orders
-        WHERE order_id = %s AND user_id = %s
-    """, (order_id, session["user_id"]))
+    try:
+        cursor.execute("""
+            SELECT 
+                order_id,
+                total_price,
+                location,
+                scheduled_date,
+                payment_method,
+                status,
+                created_at
+            FROM orders
+            WHERE order_id = %s AND user_id = %s
+        """, (order_id, session["user_id"]))
 
-    order = cursor.fetchone()
+        order = cursor.fetchone()
 
-    if not order:
+        if not order:
+            cursor.close()
+            return render_template("order_details.html", order=None, items=[], grand_total=0)
+
+        cursor.execute("""
+            SELECT 
+                oi.package_name,
+                oi.price,
+                oi.duration,
+                oi.quantity,
+                oi.location,
+                CONCAT(ph.first_name, ' ', ph.last_name) AS photographer_name,
+                ph.rating AS photographer_rating
+            FROM order_items oi
+            LEFT JOIN photographers ph ON oi.photographer_id = ph.id
+            WHERE oi.order_id = %s
+        """, (order_id,))
+        
+        items = cursor.fetchall()
+        grand_total = sum(item["price"] * item["quantity"] for item in items)
+    except Exception as e:
+        print("Order Details Error:", e)
+        order = None
+        items = []
+        grand_total = 0
+    finally:
         cursor.close()
-        return render_template("order_details.html", order=None, items=[], grand_total=0)
-
-    cursor.execute("""
-        SELECT 
-            oi.package_name,
-            oi.price,
-            oi.duration,
-            oi.quantity,
-            oi.location,
-            CONCAT(ph.first_name, ' ', ph.last_name) AS photographer_name,
-            ph.rating AS photographer_rating
-        FROM order_items oi
-        LEFT JOIN photographers ph ON oi.photographer_id = ph.id
-        WHERE oi.order_id = %s
-    """, (order_id,))
-    
-    items = cursor.fetchall()
-    grand_total = sum(item["price"] * item["quantity"] for item in items)
-    
-    cursor.close()
 
     return render_template("order_details.html", order=order, items=items, grand_total=grand_total)
 
@@ -441,23 +609,33 @@ def order_details(order_id):
 @app.route("/photographer/apply", methods=["POST"])
 def apply_photographer():
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/get-hired")
+        
     cursor = db.cursor()
-    cursor.execute("""
-        INSERT INTO photographers_applications 
-        (first_name, last_name, email, phone, address, years_exp, months_exp)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
-    """, (
-        request.form["first_name"],
-        request.form["last_name"],
-        request.form["email"],
-        request.form["phone"],
-        request.form["address"],
-        request.form["years"],
-        request.form["months"]
-    ))
-    db.commit()
-    cursor.close()
-    flash("🎉 Your application has been submitted successfully!", "success")
+    try:
+        cursor.execute("""
+            INSERT INTO photographers_applications 
+            (first_name, last_name, email, phone, address, years_exp, months_exp)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (
+            request.form["first_name"],
+            request.form["last_name"],
+            request.form["email"],
+            request.form["phone"],
+            request.form["address"],
+            request.form["years"],
+            request.form["months"]
+        ))
+        db.commit()
+        flash("🎉 Your application has been submitted successfully!", "success")
+    except Exception as e:
+        print("Application Error:", e)
+        db.rollback()
+        flash("❌ Error submitting application", "error")
+    finally:
+        cursor.close()
     return redirect("/photographer/submitted")
 
 # ---------------- PHOTOGRAPHER SUBMITTED PAGE ----------------
@@ -472,39 +650,52 @@ def admin_dashboard():
         return redirect("/admin/login")
     
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/admin/login")
+        
     cursor = db.cursor(dictionary=True)
     
-    cursor.execute("SELECT COUNT(*) as count FROM orders")
-    total_orders = cursor.fetchone()["count"]
-    
-    cursor.execute("SELECT SUM(total_price) as total FROM orders WHERE status = 'Confirmed'")
-    revenue_result = cursor.fetchone()
-    revenue = revenue_result["total"] if revenue_result["total"] else 0
-    
-    cursor.execute("SELECT COUNT(*) as count FROM users")
-    total_users = cursor.fetchone()["count"]
-    
-    cursor.execute("SELECT COUNT(*) as count FROM photographers")
-    total_photographers = cursor.fetchone()["count"]
-    
-    cursor.execute("""
-        SELECT o.order_id, o.total_price, o.status, o.created_at,
-               u.first_name, u.last_name
-        FROM orders o
-        JOIN users u ON o.user_id = u.id
-        ORDER BY o.created_at DESC
-        LIMIT 10
-    """)
-    recent_orders = cursor.fetchall()
-    
-    cursor.execute("""
-        SELECT id, first_name, last_name, email, phone, years_exp, months_exp
-        FROM photographers_applications
-        ORDER BY id DESC
-    """)
-    applications = cursor.fetchall()
-    
-    cursor.close()
+    try:
+        cursor.execute("SELECT COUNT(*) as count FROM orders")
+        total_orders = cursor.fetchone()["count"]
+        
+        cursor.execute("SELECT SUM(total_price) as total FROM orders WHERE status = 'Confirmed'")
+        revenue_result = cursor.fetchone()
+        revenue = revenue_result["total"] if revenue_result["total"] else 0
+        
+        cursor.execute("SELECT COUNT(*) as count FROM users")
+        total_users = cursor.fetchone()["count"]
+        
+        cursor.execute("SELECT COUNT(*) as count FROM photographers")
+        total_photographers = cursor.fetchone()["count"]
+        
+        cursor.execute("""
+            SELECT o.order_id, o.total_price, o.status, o.created_at,
+                   u.first_name, u.last_name
+            FROM orders o
+            JOIN users u ON o.user_id = u.id
+            ORDER BY o.created_at DESC
+            LIMIT 10
+        """)
+        recent_orders = cursor.fetchall()
+        
+        cursor.execute("""
+            SELECT id, first_name, last_name, email, phone, years_exp, months_exp
+            FROM photographers_applications
+            ORDER BY id DESC
+        """)
+        applications = cursor.fetchall()
+    except Exception as e:
+        print("Admin Dashboard Error:", e)
+        total_orders = 0
+        revenue = 0
+        total_users = 0
+        total_photographers = 0
+        recent_orders = []
+        applications = []
+    finally:
+        cursor.close()
     
     return render_template("admin_dashboard.html", 
                          total_orders=total_orders,
@@ -521,32 +712,41 @@ def admin_order_details(order_id):
         return redirect("/admin/login")
     
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/admin/dashboard")
+        
     cursor = db.cursor(dictionary=True)
     
-    cursor.execute("""
-        SELECT o.order_id, o.total_price, o.location, o.scheduled_date, 
-               o.payment_method, o.status, o.created_at,
-               u.first_name, u.last_name, u.email, u.mobile
-        FROM orders o
-        JOIN users u ON o.user_id = u.id
-        WHERE o.order_id = %s
-    """, (order_id,))
-    
-    order = cursor.fetchone()
-    
-    items = []
-    if order:
+    try:
         cursor.execute("""
-            SELECT oi.package_name, oi.price, oi.duration, oi.quantity,
-                   CONCAT(ph.first_name, ' ', ph.last_name) AS photographer_name,
-                   ph.rating AS photographer_rating
-            FROM order_items oi
-            LEFT JOIN photographers ph ON oi.photographer_id = ph.id
-            WHERE oi.order_id = %s
+            SELECT o.order_id, o.total_price, o.location, o.scheduled_date, 
+                   o.payment_method, o.status, o.created_at,
+                   u.first_name, u.last_name, u.email, u.mobile
+            FROM orders o
+            JOIN users u ON o.user_id = u.id
+            WHERE o.order_id = %s
         """, (order_id,))
-        items = cursor.fetchall()
-    
-    cursor.close()
+        
+        order = cursor.fetchone()
+        
+        items = []
+        if order:
+            cursor.execute("""
+                SELECT oi.package_name, oi.price, oi.duration, oi.quantity,
+                       CONCAT(ph.first_name, ' ', ph.last_name) AS photographer_name,
+                       ph.rating AS photographer_rating
+                FROM order_items oi
+                LEFT JOIN photographers ph ON oi.photographer_id = ph.id
+                WHERE oi.order_id = %s
+            """, (order_id,))
+            items = cursor.fetchall()
+    except Exception as e:
+        print("Admin Order Details Error:", e)
+        order = None
+        items = []
+    finally:
+        cursor.close()
     
     return render_template("admin_order_details.html", order=order, items=items)
 
@@ -555,11 +755,21 @@ def admin_order_details(order_id):
 def admin_photographers():
     if "admin_id" not in session:
         return redirect("/admin/login")
+    
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/admin/dashboard")
+        
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM photographers ORDER BY id DESC")
-    photographers = cursor.fetchall()
-    cursor.close()
+    try:
+        cursor.execute("SELECT * FROM photographers ORDER BY id DESC")
+        photographers = cursor.fetchall()
+    except Exception as e:
+        print("Admin Photographers Error:", e)
+        photographers = []
+    finally:
+        cursor.close()
     return render_template("admin_photographers.html", photographers=photographers)
 
 # ---------------- ADMIN APPROVE PHOTOGRAPHER ----------------
@@ -567,17 +777,28 @@ def admin_photographers():
 def approve_photographer(id):
     if "admin_id" not in session:
         return redirect("/admin/login")
+    
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/admin/dashboard")
+        
     cursor = db.cursor()
-    cursor.execute("""
-        INSERT INTO photographers (first_name, last_name, email, phone, address, status, rating)
-        SELECT first_name, last_name, email, phone, address, 'active', 0
-        FROM photographers_applications WHERE id=%s
-    """, (id,))
-    cursor.execute("DELETE FROM photographers_applications WHERE id=%s", (id,))
-    db.commit()
-    cursor.close()
-    flash("✅ Photographer approved successfully!", "success")
+    try:
+        cursor.execute("""
+            INSERT INTO photographers (first_name, last_name, email, phone, address, status, rating)
+            SELECT first_name, last_name, email, phone, address, 'active', 0
+            FROM photographers_applications WHERE id=%s
+        """, (id,))
+        cursor.execute("DELETE FROM photographers_applications WHERE id=%s", (id,))
+        db.commit()
+        flash("✅ Photographer approved successfully!", "success")
+    except Exception as e:
+        print("Approve Error:", e)
+        db.rollback()
+        flash("❌ Error approving photographer", "error")
+    finally:
+        cursor.close()
     return redirect("/admin/dashboard")
 
 # ---------------- ADMIN REJECT PHOTOGRAPHER ----------------
@@ -585,12 +806,23 @@ def approve_photographer(id):
 def reject_photographer(id):
     if "admin_id" not in session:
         return redirect("/admin/login")
+    
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/admin/dashboard")
+        
     cursor = db.cursor()
-    cursor.execute("DELETE FROM photographers_applications WHERE id=%s", (id,))
-    db.commit()
-    cursor.close()
-    flash("❌ Application rejected!", "error")
+    try:
+        cursor.execute("DELETE FROM photographers_applications WHERE id=%s", (id,))
+        db.commit()
+        flash("❌ Application rejected!", "error")
+    except Exception as e:
+        print("Reject Error:", e)
+        db.rollback()
+        flash("❌ Error rejecting application", "error")
+    finally:
+        cursor.close()
     return redirect("/admin/dashboard")
 
 # ---------------- ADMIN ORDERS ----------------
@@ -598,17 +830,27 @@ def reject_photographer(id):
 def admin_orders():
     if "admin_id" not in session:
         return redirect("/admin/login")
+    
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/admin/dashboard")
+        
     cursor = db.cursor(dictionary=True)
-    cursor.execute("""
-        SELECT o.order_id, o.total_price, o.status, o.created_at,
-               u.first_name, u.last_name
-        FROM orders o
-        JOIN users u ON o.user_id = u.id
-        ORDER BY o.created_at DESC
-    """)
-    orders = cursor.fetchall()
-    cursor.close()
+    try:
+        cursor.execute("""
+            SELECT o.order_id, o.total_price, o.status, o.created_at,
+                   u.first_name, u.last_name
+            FROM orders o
+            JOIN users u ON o.user_id = u.id
+            ORDER BY o.created_at DESC
+        """)
+        orders = cursor.fetchall()
+    except Exception as e:
+        print("Admin Orders Error:", e)
+        orders = []
+    finally:
+        cursor.close()
     return render_template("admin_orders.html", orders=orders)
 
 # ---------------- ADMIN UPDATE ORDER STATUS ----------------
@@ -619,11 +861,21 @@ def update_order_status(order_id):
     
     new_status = request.form.get("status")
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/admin/dashboard")
+        
     cursor = db.cursor()
-    cursor.execute("UPDATE orders SET status = %s WHERE order_id = %s", (new_status, order_id))
-    db.commit()
-    cursor.close()
-    flash(f"✅ Order status updated to {new_status}!", "success")
+    try:
+        cursor.execute("UPDATE orders SET status = %s WHERE order_id = %s", (new_status, order_id))
+        db.commit()
+        flash(f"✅ Order status updated to {new_status}!", "success")
+    except Exception as e:
+        print("Update Status Error:", e)
+        db.rollback()
+        flash("❌ Error updating order status", "error")
+    finally:
+        cursor.close()
     return redirect(f"/admin/order_details/{order_id}")
 
 # ---------------- ADMIN PACKAGES ----------------
@@ -631,8 +883,14 @@ def update_order_status(order_id):
 def admin_packages():
     if "admin_id" not in session:
         return redirect("/admin/login")
+    
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/admin/dashboard")
+        
     cursor = db.cursor(dictionary=True)
+    
     if request.method == "POST":
         try:
             package_name = request.form.get("package_name")
@@ -647,11 +905,18 @@ def admin_packages():
             flash("✅ Package added successfully!", "success")
         except Exception as e:
             print("Add Package Error:", e)
+            db.rollback()
             flash("❌ Error adding package", "error")
         return redirect("/admin/packages")
-    cursor.execute("SELECT * FROM packages ORDER BY package_id DESC")
-    packages = cursor.fetchall()
-    cursor.close()
+    
+    try:
+        cursor.execute("SELECT * FROM packages ORDER BY package_id DESC")
+        packages = cursor.fetchall()
+    except Exception as e:
+        print("Fetch Packages Error:", e)
+        packages = []
+    finally:
+        cursor.close()
     return render_template("admin_packages.html", packages=packages)
 
 # ---------------- DELETE PACKAGE ----------------
@@ -659,7 +924,12 @@ def admin_packages():
 def delete_package(id):
     if "admin_id" not in session:
         return redirect("/admin/login")
+    
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/admin/packages")
+        
     cursor = db.cursor()
     try:
         cursor.execute("DELETE FROM user_packages WHERE package_id=%s", (id,))
@@ -668,8 +938,10 @@ def delete_package(id):
         flash("🗑️ Package deleted successfully!", "success")
     except Exception as e:
         print("Delete Error:", e)
+        db.rollback()
         flash("❌ Cannot delete package", "error")
-    cursor.close()
+    finally:
+        cursor.close()
     return redirect("/admin/packages")
 
 # ---------------- EDIT PACKAGE ----------------
@@ -677,8 +949,14 @@ def delete_package(id):
 def edit_package(id):
     if "admin_id" not in session:
         return redirect("/admin/login")
+    
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/admin/packages")
+        
     cursor = db.cursor(dictionary=True)
+    
     if request.method == "POST":
         try:
             package_name = request.form.get("package_name")
@@ -695,22 +973,39 @@ def edit_package(id):
             return redirect("/admin/packages")
         except Exception as e:
             print("Update Error:", e)
+            db.rollback()
             flash("❌ Error updating package", "error")
-    cursor.execute("SELECT * FROM packages WHERE package_id=%s", (id,))
-    package = cursor.fetchone()
-    cursor.close()
-    return render_template("edit_package.html", package=package)
+    else:
+        try:
+            cursor.execute("SELECT * FROM packages WHERE package_id=%s", (id,))
+            package = cursor.fetchone()
+        except Exception as e:
+            print("Fetch Package Error:", e)
+            package = None
+        finally:
+            cursor.close()
+        return render_template("edit_package.html", package=package)
 
 # ---------------- ADMIN USERS ----------------
 @app.route("/admin/users")
 def admin_users():
     if "admin_id" not in session:
         return redirect("/admin/login")
+    
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/admin/dashboard")
+        
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT id, first_name, last_name, email, mobile, username, role, created_at FROM users ORDER BY id DESC")
-    users = cursor.fetchall()
-    cursor.close()
+    try:
+        cursor.execute("SELECT id, first_name, last_name, email, mobile, username, role, created_at FROM users ORDER BY id DESC")
+        users = cursor.fetchall()
+    except Exception as e:
+        print("Admin Users Error:", e)
+        users = []
+    finally:
+        cursor.close()
     return render_template("admin_users.html", users=users)
 
 # ---------------- DELETE USER ----------------
@@ -718,7 +1013,12 @@ def admin_users():
 def delete_user(id):
     if "admin_id" not in session:
         return redirect("/admin/login")
+    
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/admin/users")
+        
     cursor = db.cursor()
     try:
         cursor.execute("DELETE FROM user_packages WHERE user_id=%s", (id,))
@@ -730,7 +1030,8 @@ def delete_user(id):
         db.rollback()
         print("Delete Error:", e)
         flash("❌ Error deleting user!", "error")
-    cursor.close()
+    finally:
+        cursor.close()
     return redirect("/admin/users")
 
 # ---------------- Order Success ----------------
@@ -740,100 +1041,113 @@ def order_success():
     total = request.args.get("total")
     return render_template("order_success.html", order_id=order_id, total=total)
 
-#----------------- Check Out Route (Creates order_items)---------------
+#----------------- Check Out Route ----------------
 @app.route("/checkout", methods=["GET", "POST"])
 def checkout():
     if "user_id" not in session:
         return redirect("/")
 
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/cart")
+        
     cursor = db.cursor(dictionary=True)
 
     if request.method == "GET":
-        cursor.execute("""
-            SELECT 
-                up.id AS cart_id,
-                up.quantity,
-                up.location,
-                up.scheduled_date,
-                p.package_name,
-                p.package_price,
-                p.duration,
-                CONCAT(ph.first_name, ' ', ph.last_name) AS photographer_name,
-                up.photographer_id
-            FROM user_packages up
-            JOIN packages p ON up.package_id = p.package_id
-            LEFT JOIN photographers ph ON up.photographer_id = ph.id
-            WHERE up.user_id = %s
-        """, (session["user_id"],))
+        try:
+            cursor.execute("""
+                SELECT 
+                    up.id AS cart_id,
+                    up.quantity,
+                    up.location,
+                    up.scheduled_date,
+                    p.package_name,
+                    p.package_price,
+                    p.duration,
+                    CONCAT(ph.first_name, ' ', ph.last_name) AS photographer_name,
+                    up.photographer_id
+                FROM user_packages up
+                JOIN packages p ON up.package_id = p.package_id
+                LEFT JOIN photographers ph ON up.photographer_id = ph.id
+                WHERE up.user_id = %s
+            """, (session["user_id"],))
 
-        items = cursor.fetchall()
-        total = sum(item["package_price"] * item["quantity"] for item in items)
-
-        cursor.close()
+            items = cursor.fetchall()
+            total = sum(item["package_price"] * item["quantity"] for item in items)
+        except Exception as e:
+            print("Checkout GET Error:", e)
+            items = []
+            total = 0
+        finally:
+            cursor.close()
         return render_template("checkout.html", items=items, total=total)
 
     if request.method == "POST":
         payment_method = request.form.get("payment")
 
-        cursor.execute("""
-            SELECT up.*, p.package_name, p.package_price, p.duration
-            FROM user_packages up
-            JOIN packages p ON up.package_id = p.package_id
-            WHERE up.user_id = %s
-        """, (session["user_id"],))
-
-        cart_items = cursor.fetchall()
-
-        if not cart_items:
-            cursor.close()
-            flash("Your cart is empty!", "error")
-            return redirect("/cart")
-
-        total = sum(item["package_price"] * item["quantity"] for item in cart_items)
-        location = cart_items[0]["location"] if cart_items else None
-        scheduled_date = cart_items[0]["scheduled_date"] if cart_items else None
-
-        order_code = str(uuid.uuid4())[:8]
-
-        cursor.execute("""
-            INSERT INTO orders 
-            (user_id, total_price, location, payment_method, status, order_id, scheduled_date)
-            VALUES (%s,%s,%s,%s,%s,%s,%s)
-        """, (
-            session["user_id"],
-            total,
-            location,
-            payment_method,
-            "Confirmed",
-            order_code,
-            scheduled_date
-        ))
-
-        db.commit()
-
-        for item in cart_items:
+        try:
             cursor.execute("""
-                INSERT INTO order_items 
-                (order_id, package_name, price, duration, location, quantity, photographer_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                SELECT up.*, p.package_name, p.package_price, p.duration
+                FROM user_packages up
+                JOIN packages p ON up.package_id = p.package_id
+                WHERE up.user_id = %s
+            """, (session["user_id"],))
+
+            cart_items = cursor.fetchall()
+
+            if not cart_items:
+                flash("Your cart is empty!", "error")
+                return redirect("/cart")
+
+            total = sum(item["package_price"] * item["quantity"] for item in cart_items)
+            location = cart_items[0]["location"] if cart_items else None
+            scheduled_date = cart_items[0]["scheduled_date"] if cart_items else None
+
+            order_code = str(uuid.uuid4())[:8]
+
+            cursor.execute("""
+                INSERT INTO orders 
+                (user_id, total_price, location, payment_method, status, order_id, scheduled_date)
+                VALUES (%s,%s,%s,%s,%s,%s,%s)
             """, (
+                session["user_id"],
+                total,
+                location,
+                payment_method,
+                "Confirmed",
                 order_code,
-                item["package_name"],
-                item["package_price"],
-                item["duration"],
-                item["location"],
-                item["quantity"],
-                item["photographer_id"]
+                scheduled_date
             ))
 
-        db.commit()
-        cursor.execute("DELETE FROM user_packages WHERE user_id=%s", (session["user_id"],))
-        db.commit()
-        cursor.close()
+            for item in cart_items:
+                cursor.execute("""
+                    INSERT INTO order_items 
+                    (order_id, package_name, price, duration, location, quantity, photographer_id)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    order_code,
+                    item["package_name"],
+                    item["package_price"],
+                    item["duration"],
+                    item["location"],
+                    item["quantity"],
+                    item["photographer_id"]
+                ))
 
-        return redirect(f"/order-success?order_id={order_code}&total={total}")
-    
+            cursor.execute("DELETE FROM user_packages WHERE user_id=%s", (session["user_id"],))
+            db.commit()
+            cursor.close()
+            
+            return redirect(f"/order-success?order_id={order_code}&total={total}")
+            
+        except Exception as e:
+            print("Checkout POST Error:", e)
+            db.rollback()
+            flash("❌ Error processing checkout", "error")
+            cursor.close()
+            return redirect("/cart")
+
 # ---------------- ADMIN EDIT PHOTOGRAPHER ----------------
 @app.route("/admin/edit_photographer/<int:id>", methods=["GET", "POST"])
 def edit_photographer(id):
@@ -841,6 +1155,10 @@ def edit_photographer(id):
         return redirect("/admin/login")
     
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/admin/photographers")
+        
     cursor = db.cursor(dictionary=True)
     
     if request.method == "POST":
@@ -869,9 +1187,14 @@ def edit_photographer(id):
             return redirect(f"/admin/edit_photographer/{id}")
     
     # GET request - fetch photographer details
-    cursor.execute("SELECT * FROM photographers WHERE id=%s", (id,))
-    photographer = cursor.fetchone()
-    cursor.close()
+    try:
+        cursor.execute("SELECT * FROM photographers WHERE id=%s", (id,))
+        photographer = cursor.fetchone()
+    except Exception as e:
+        print("Fetch Photographer Error:", e)
+        photographer = None
+    finally:
+        cursor.close()
     
     if not photographer:
         flash("❌ Photographer not found!", "error")
@@ -886,56 +1209,64 @@ def delete_photographer(id):
         return redirect("/admin/login")
     
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect("/admin/photographers")
+        
     cursor = db.cursor()
     
     try:
-        # Check if photographer exists
         cursor.execute("SELECT first_name, last_name FROM photographers WHERE id=%s", (id,))
         photographer = cursor.fetchone()
         
         if photographer:
-            # Delete photographer
             cursor.execute("DELETE FROM photographers WHERE id=%s", (id,))
             db.commit()
-            flash(f"✅ Photographer {photographer[0]} {photographer[1]} deleted successfully!", "success")
+            flash(f"✅ Photographer deleted successfully!", "success")
         else:
             flash("❌ Photographer not found!", "error")
     except Exception as e:
         print("Delete Error:", e)
         db.rollback()
         flash("❌ Error deleting photographer", "error")
-    
-    cursor.close()
+    finally:
+        cursor.close()
     return redirect("/admin/photographers")
 
+# ---------------- ADMIN VIEW USER ----------------
 @app.route('/admin/view_user/<int:user_id>')
 def view_user(user_id):
     if 'admin_id' not in session:
         return redirect('/admin/login')
 
     db = get_db()
+    if not db:
+        flash("Database error", "error")
+        return redirect('/admin/users')
+        
     cursor = db.cursor(dictionary=True)
 
-    # Get user details
-    cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
-    user = cursor.fetchone()
+    try:
+        cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+        user = cursor.fetchone()
 
-    if not user:
-        flash("User not found", "error")
-        return redirect('/admin/users')
+        if not user:
+            flash("User not found", "error")
+            return redirect('/admin/users')
 
-    # Get user's orders
-    cursor.execute("""
-        SELECT order_id, total_price, status, created_at 
-        FROM orders 
-        WHERE user_id = %s 
-        ORDER BY created_at DESC
-    """, (user_id,))
-    orders = cursor.fetchall()
-    user['orders'] = orders
-
-    cursor.close()
-    db.close()
+        cursor.execute("""
+            SELECT order_id, total_price, status, created_at 
+            FROM orders 
+            WHERE user_id = %s 
+            ORDER BY created_at DESC
+        """, (user_id,))
+        orders = cursor.fetchall()
+        user['orders'] = orders
+    except Exception as e:
+        print("View User Error:", e)
+        user = None
+    finally:
+        cursor.close()
 
     return render_template('admin_view_user.html', user=user)
 
@@ -947,4 +1278,5 @@ def logout():
 
 # ---------------- RUN APP ----------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
