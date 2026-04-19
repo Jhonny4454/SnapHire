@@ -619,8 +619,8 @@ footer {
                     {% if photographers %}
                       {% for ph in photographers %}
                         <option value="{{ ph.id }}" {% if ph.id|string == item.photographer_id|string %}selected{% endif %}>
-                          {{ ph.name }} 
-                          {% if ph.rating %}
+                          {{ ph.name }}
+                          {% if ph.rating is not none %}
                             (⭐ {{ ph.rating }})
                           {% endif %}
                         </option>
@@ -698,7 +698,6 @@ footer {
 </footer>
 
 <script>
-// Add animation to cart items
 document.addEventListener('DOMContentLoaded', function() {
   const items = document.querySelectorAll('.cart-item');
   items.forEach((item, index) => {

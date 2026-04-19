@@ -257,6 +257,7 @@ def home():
     )
 
 # ---------------- CART ----------------
+# ---------------- CART ----------------
 @app.route("/cart", methods=["GET", "POST"])
 def cart():
     if "user_id" not in session:
@@ -306,14 +307,14 @@ def cart():
         """, (user_id,))
         cart_items = cursor.fetchall()
 
-        # Fetch photographers for dropdown
+        # ✅ FIXED: Removed status filter so all photographers show
         cursor.execute("""
-            SELECT id, CONCAT(first_name, ' ', last_name) AS name, rating
+            SELECT id, CONCAT(first_name, ' ', last_name) AS name, rating, status
             FROM photographers
-            WHERE status = 'active' OR status IS NULL
             ORDER BY rating DESC
         """)
         photographers = cursor.fetchall()
+        print("DEBUG photographers:", photographers)  # Check terminal to verify
 
         total = sum(item["package_price"] * item["quantity"] for item in cart_items)
     except Exception as e:
@@ -326,7 +327,6 @@ def cart():
         cursor.close()
         
     return render_template("cart.html", cart_items=cart_items, total=total, photographers=photographers)
-
 # ---------------- ADD TO CART ----------------
 @app.route("/add_package/<int:package_id>", methods=["POST"])
 def add_package(package_id):
