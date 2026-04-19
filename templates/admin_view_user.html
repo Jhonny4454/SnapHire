@@ -366,17 +366,12 @@ tr:hover {
   transition: all 0.3s ease;
 }
 
-.btn-edit {
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
-}
-
 .btn-delete {
   background: linear-gradient(135deg, #e74c3c, #c0392b);
   color: white;
 }
 
-.btn-edit:hover, .btn-delete:hover {
+.btn-delete:hover {
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
@@ -616,11 +611,8 @@ tr:hover {
       </div>
     </div>
 
-    <!-- Action Buttons -->
+    <!-- Action Buttons - Only Delete Button Remains -->
     <div class="action-buttons">
-      <a href="/admin/edit_user/{{ user.id }}" class="action-btn btn-edit">
-        <i class="fas fa-edit"></i> Edit User
-      </a>
       {% if user.role != 'admin' %}
       <form action="/admin/delete_user/{{ user.id }}" method="POST" style="display:inline;">
         <button type="submit" class="action-btn btn-delete" onclick="return confirm('Are you sure you want to delete this user? This action cannot be undone.')">
