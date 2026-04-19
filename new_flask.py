@@ -1066,7 +1066,7 @@ def order_success():
     total = request.args.get("total")
     return render_template("order_success.html", order_id=order_id, total=total)
 
-#----------------- Check Out Route ----------------
+#----------------- Check Out Route (FIXED) ----------------
 @app.route("/checkout", methods=["GET", "POST"])
 @login_required
 def checkout():
@@ -1077,6 +1077,7 @@ def checkout():
         
     cursor = db.cursor(dictionary=True)
 
+    # ---------------- GET ----------------
     if request.method == "GET":
         try:
             cursor.execute("""
@@ -1097,15 +1098,25 @@ def checkout():
             """, (session["user_id"],))
 
             items = cursor.fetchall()
+
+            # 🔥 VALIDATION CHECK (IMPORTANT)
+            for item in items:
+                if not item["photographer_id"] or not item["location"] or not item["scheduled_date"]:
+                    flash("⚠️ Please complete all package details before checkout!", "error")
+                    return redirect("/cart")
+
             total = sum(item["package_price"] * item["quantity"] for item in items)
+
         except Exception as e:
             print("Checkout GET Error:", e)
             items = []
             total = 0
         finally:
             cursor.close()
+
         return render_template("checkout.html", items=items, total=total)
 
+    # ---------------- POST ----------------
     if request.method == "POST":
         payment_method = request.form.get("payment")
 
@@ -1123,9 +1134,17 @@ def checkout():
                 flash("Your cart is empty!", "error")
                 return redirect("/cart")
 
+            # 🔥 VALIDATION AGAIN (CRITICAL)
+            for item in cart_items:
+                if not item["photographer_id"] or not item["location"] or not item["scheduled_date"]:
+                    flash("⚠️ Please complete all package details before placing order!", "error")
+                    return redirect("/cart")
+
             total = sum(item["package_price"] * item["quantity"] for item in cart_items)
-            location = cart_items[0]["location"] if cart_items else None
-            scheduled_date = cart_items[0]["scheduled_date"] if cart_items else None
+
+            # Use first item (or you can improve later for multi-location)
+            location = cart_items[0]["location"]
+            scheduled_date = cart_items[0]["scheduled_date"]
 
             order_code = str(uuid.uuid4())[:8]
 
@@ -1158,20 +1177,21 @@ def checkout():
                     item["photographer_id"]
                 ))
 
+            # Clear cart
             cursor.execute("DELETE FROM user_packages WHERE user_id=%s", (session["user_id"],))
+
             db.commit()
             cursor.close()
-            
+
             flash("🎉 Order placed successfully!", "success")
             return redirect(f"/order-success?order_id={order_code}&total={total}")
-            
+
         except Exception as e:
             print("Checkout POST Error:", e)
             db.rollback()
             flash("❌ Error processing checkout", "error")
             cursor.close()
             return redirect("/cart")
-
 # ---------------- ADMIN EDIT PHOTOGRAPHER ----------------
 @app.route("/admin/edit_photographer/<int:id>", methods=["GET", "POST"])
 @admin_required
