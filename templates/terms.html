@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Terms & Conditions - NA Photography Studio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Terms & Conditions - SnapHire</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
@@ -20,6 +20,8 @@ body {
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   animation: fadeIn 0.8s ease-in;
   min-height: 100vh;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 /* GLOBAL */
@@ -32,11 +34,11 @@ body {
   to { opacity: 1; }
 }
 
-/* HEADER */
+/* HEADER - Responsive */
 header {
   background: rgba(255,255,255,0.95);
   backdrop-filter: blur(10px);
-  padding: 15px 30px;
+  padding: clamp(12px, 4vw, 20px) clamp(15px, 5vw, 40px);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -44,11 +46,13 @@ header {
   position: sticky;
   top: 0;
   z-index: 100;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
 .logo {
   font-weight: bold;
-  font-size: 24px;
+  font-size: clamp(18px, 6vw, 26px);
   color: #ff7f50;
   display: flex;
   align-items: center;
@@ -56,26 +60,28 @@ header {
 }
 
 .logo i {
-  font-size: 28px;
+  font-size: clamp(20px, 6vw, 28px);
 }
 
 .header-buttons {
   display: flex;
-  gap: 12px;
+  gap: clamp(8px, 3vw, 15px);
+  flex-wrap: wrap;
 }
 
 .header-btn {
   background: linear-gradient(45deg, #ff7f50, #ff6347);
   color: white;
   text-decoration: none;
-  padding: 8px 18px;
+  padding: clamp(6px, 2vw, 10px) clamp(12px, 4vw, 20px);
   border-radius: 25px;
   display: flex;
   align-items: center;
   gap: 8px;
   transition: all 0.3s ease;
-  font-size: 14px;
+  font-size: clamp(12px, 3.5vw, 14px);
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .header-btn:hover {
@@ -83,12 +89,12 @@ header {
   box-shadow: 0 5px 15px rgba(255,127,80,0.4);
 }
 
-/* HERO SECTION */
+/* HERO SECTION - Responsive */
 .hero-section {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   text-align: center;
-  padding: 60px 20px;
+  padding: clamp(40px, 10vw, 80px) clamp(15px, 5vw, 30px);
   position: relative;
   overflow: hidden;
 }
@@ -112,26 +118,29 @@ header {
 }
 
 .hero-section h1 {
-  font-size: 3em;
+  font-size: clamp(28px, 8vw, 52px);
   margin-bottom: 15px;
   position: relative;
   z-index: 1;
+  word-wrap: break-word;
 }
 
 .hero-section p {
-  font-size: 1.2em;
+  font-size: clamp(14px, 4vw, 20px);
   opacity: 0.9;
   position: relative;
   z-index: 1;
+  padding: 0 10px;
 }
 
-/* MAIN CONTAINER */
+/* MAIN CONTAINER - Responsive */
 .container {
-  max-width: 1000px;
-  margin: 50px auto;
+  max-width: 1200px;
+  width: 90%;
+  margin: clamp(30px, 8vw, 60px) auto;
   background: white;
-  padding: 45px;
-  border-radius: 24px;
+  padding: clamp(20px, 5vw, 50px);
+  border-radius: clamp(16px, 5vw, 28px);
   box-shadow: 0 20px 40px rgba(0,0,0,0.1);
   animation: slideUp 0.6s ease;
 }
@@ -145,18 +154,22 @@ header {
 .last-updated {
   text-align: center;
   color: #888;
-  font-size: 14px;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
+  font-size: clamp(12px, 3.5vw, 14px);
+  margin-bottom: clamp(20px, 5vw, 35px);
+  padding-bottom: clamp(15px, 4vw, 25px);
   border-bottom: 1px solid #eee;
 }
 
-/* TERMS SECTIONS */
+.last-updated i {
+  margin-right: 8px;
+}
+
+/* TERMS SECTIONS - Responsive */
 .terms-section {
-  margin-bottom: 30px;
+  margin-bottom: clamp(25px, 6vw, 40px);
   background: #f8f9fa;
   border-radius: 16px;
-  padding: 25px;
+  padding: clamp(18px, 4vw, 28px);
   transition: all 0.3s ease;
 }
 
@@ -167,22 +180,23 @@ header {
 
 .terms-section h2 {
   color: #ff7f50;
-  margin-bottom: 15px;
-  font-size: 22px;
+  margin-bottom: clamp(12px, 3vw, 18px);
+  font-size: clamp(20px, 5vw, 26px);
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .terms-section h2 i {
-  font-size: 24px;
+  font-size: clamp(22px, 5vw, 28px);
 }
 
 .terms-section p {
   color: #555;
   line-height: 1.8;
   margin-bottom: 15px;
-  font-size: 15px;
+  font-size: clamp(13px, 3.5vw, 15px);
 }
 
 .terms-section ul {
@@ -193,13 +207,14 @@ header {
 
 .terms-section li {
   margin-bottom: 8px;
+  font-size: clamp(13px, 3.5vw, 15px);
 }
 
 /* HIGHLIGHT BOX */
 .highlight-box {
   background: linear-gradient(135deg, #fff5f2, #fff);
   border-left: 4px solid #ff7f50;
-  padding: 20px;
+  padding: clamp(15px, 4vw, 22px);
   border-radius: 12px;
   margin: 20px 0;
 }
@@ -209,28 +224,34 @@ header {
   margin-right: 10px;
 }
 
-/* CONTACT SECTION */
+.highlight-box strong {
+  color: #333;
+}
+
+/* CONTACT SECTION - Responsive */
 .contact-section {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 30px;
+  padding: clamp(20px, 5vw, 35px);
   border-radius: 16px;
   margin-top: 30px;
   text-align: center;
 }
 
 .contact-section h3 {
-  font-size: 22px;
+  font-size: clamp(18px, 5vw, 24px);
   margin-bottom: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .contact-section p {
   color: rgba(255,255,255,0.9);
   margin-bottom: 20px;
+  font-size: clamp(13px, 3.5vw, 15px);
 }
 
 .contact-email {
@@ -238,12 +259,13 @@ header {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 24px;
+  padding: clamp(10px, 3vw, 14px) clamp(18px, 5vw, 28px);
   border-radius: 30px;
   text-decoration: none;
   color: white;
   font-weight: bold;
   transition: all 0.3s ease;
+  font-size: clamp(13px, 3.5vw, 15px);
 }
 
 .contact-email:hover {
@@ -251,10 +273,10 @@ header {
   transform: translateY(-2px);
 }
 
-/* BUTTON */
+/* BUTTON - Responsive */
 .btn {
   background: linear-gradient(135deg, #ff7f50, #ff6347);
-  padding: 12px 25px;
+  padding: clamp(10px, 3vw, 14px) clamp(20px, 5vw, 28px);
   color: white;
   border-radius: 30px;
   text-decoration: none;
@@ -266,6 +288,7 @@ header {
   cursor: pointer;
   box-shadow: 0 10px 25px rgba(255,127,80,0.4);
   transition: all 0.3s ease;
+  font-size: clamp(13px, 3.5vw, 15px);
 }
 
 .btn:hover {
@@ -280,49 +303,25 @@ header {
   width: fit-content;
 }
 
-/* FOOTER */
+/* FOOTER - Responsive */
 footer {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   color: white;
   text-align: center;
-  padding: 30px;
-  margin-top: 50px;
+  padding: clamp(20px, 6vw, 40px);
+  margin-top: clamp(30px, 8vw, 60px);
 }
 
 footer p {
   color: #888;
   margin-top: 10px;
+  font-size: clamp(11px, 3vw, 14px);
 }
 
-/* RESPONSIVE */
-@media (max-width: 768px) {
-  .hero-section h1 {
-    font-size: 2em;
-  }
-  
-  .container {
-    padding: 25px;
-    margin: 30px 20px;
-  }
-  
-  .terms-section {
-    padding: 20px;
-  }
-  
-  .terms-section h2 {
-    font-size: 20px;
-  }
-  
-  header {
-    flex-direction: column;
-    gap: 15px;
-    text-align: center;
-  }
-}
-
+/* EXTRA SMALL DEVICES (Phones) */
 @media (max-width: 480px) {
   .hero-section h1 {
-    font-size: 1.5em;
+    font-size: 24px;
   }
   
   .terms-section h2 {
@@ -331,6 +330,71 @@ footer p {
   
   .contact-section h3 {
     font-size: 18px;
+  }
+  
+  .header-buttons {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .logo {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .terms-section ul {
+    margin-left: 15px;
+  }
+}
+
+/* TABLET DEVICES */
+@media (min-width: 481px) and (max-width: 768px) {
+  .hero-section h1 {
+    font-size: 32px;
+  }
+  
+  .terms-section h2 {
+    font-size: 22px;
+  }
+}
+
+/* LANDSCAPE MODE */
+@media (max-width: 768px) and (orientation: landscape) {
+  .hero-section {
+    padding: 30px 20px;
+  }
+  
+  .hero-section h1 {
+    font-size: 28px;
+  }
+}
+
+/* PRINT STYLES */
+@media print {
+  .header-buttons, .contact-section, .btn-home, footer {
+    display: none;
+  }
+  
+  .container {
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+  
+  .hero-section {
+    background: #667eea;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .terms-section {
+    break-inside: avoid;
   }
 }
 </style>
@@ -341,7 +405,7 @@ footer p {
 <header>
   <div class="logo">
     <i class="fas fa-camera"></i>
-    NA Studio Photography
+    SnapHire
   </div>
   <div class="header-buttons">
     <a href="/home" class="header-btn">
@@ -370,7 +434,7 @@ footer p {
       1. Acceptance of Terms
     </h2>
     <p>
-      Welcome to NA Photography Studio. By accessing or using our website and services, you agree to be bound by these Terms & Conditions. 
+      Welcome to SnapHire. By accessing or using our website and services, you agree to be bound by these Terms & Conditions. 
       If you do not agree with any part of these terms, please do not use our services. These terms apply to all visitors, users, and clients.
     </p>
   </div>
@@ -381,7 +445,7 @@ footer p {
       2. Definitions
     </h2>
     <ul>
-      <li><strong>"Studio"</strong> refers to NA Photography Studio and its services, employees, and representatives.</li>
+      <li><strong>"SnapHire"</strong> refers to SnapHire Photography Studio and its services, employees, and representatives.</li>
       <li><strong>"Client"</strong> refers to any individual or entity using our services or website.</li>
       <li><strong>"Services"</strong> include photography sessions, package bookings, consultations, and related offerings.</li>
       <li><strong>"Platform"</strong> refers to our website and any associated applications.</li>
@@ -441,7 +505,7 @@ footer p {
       <li>Ensuring a safe environment during photoshoots</li>
     </ul>
     <p>
-      The Studio reserves the right to cancel or reschedule sessions due to client lateness beyond 30 minutes.
+      SnapHire reserves the right to cancel or reschedule sessions due to client lateness beyond 30 minutes.
     </p>
   </div>
 
@@ -451,12 +515,12 @@ footer p {
       6. Intellectual Property Rights
     </h2>
     <p>
-      All photographs, images, and creative content produced by NA Photography Studio remain the intellectual property of the Studio.
+      All photographs, images, and creative content produced by SnapHire remain the intellectual property of SnapHire.
     </p>
     <ul>
       <li>Clients receive a personal license to use images for non-commercial purposes</li>
       <li>Commercial use requires explicit written permission and may incur additional fees</li>
-      <li>The Studio retains the right to use images for portfolio, marketing, and promotional purposes</li>
+      <li>SnapHire retains the right to use images for portfolio, marketing, and promotional purposes</li>
       <li>Editing or altering photos without permission is prohibited</li>
     </ul>
   </div>
@@ -482,7 +546,7 @@ footer p {
       8. Limitation of Liability
     </h2>
     <p>
-      To the maximum extent permitted by law, NA Photography Studio shall not be liable for:
+      To the maximum extent permitted by law, SnapHire shall not be liable for:
     </p>
     <ul>
       <li>Indirect, incidental, or consequential damages</li>
@@ -525,7 +589,7 @@ footer p {
       If you have any questions about these Terms & Conditions, please contact us:
     </p>
     <ul>
-      <li><strong>Email:</strong> terms@nastudio.com</li>
+      <li><strong>Email:</strong> terms@snaphire.com</li>
       <li><strong>Phone:</strong> +91 98765 43210</li>
       <li><strong>Address:</strong> Thane, Maharashtra, India</li>
     </ul>
@@ -540,8 +604,8 @@ footer p {
     <p>
       If you have any questions or concerns about our Terms & Conditions, our support team is here to help.
     </p>
-    <a href="mailto:support@nastudio.com" class="contact-email">
-      <i class="fas fa-envelope"></i> support@nastudio.com
+    <a href="mailto:support@snaphire.com" class="contact-email">
+      <i class="fas fa-envelope"></i> support@snaphire.com
     </a>
   </div>
 
@@ -553,7 +617,7 @@ footer p {
 </div>
 
 <footer>
-  <p>&copy; 2026 NA Photography Studio. All rights reserved. | <i class="fas fa-camera"></i> Capturing your special moments</p>
+  <p>&copy; 2026 SnapHire. All rights reserved. | <i class="fas fa-camera"></i> Capturing your special moments</p>
 </footer>
 
 </body>

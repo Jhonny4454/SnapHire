@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin Dashboard - NA Studio</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard - SnapHire</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 
@@ -18,79 +18,112 @@ body {
   margin: 0;
   font-family: 'Segoe UI', Arial, sans-serif;
   display: flex;
-  background: linear-gradient(135deg, #1f2937, #4b5563);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background-attachment: fixed;
   color: #fff;
   min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
 }
 
-/* SIDEBAR */
+/* Animated background overlay */
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+  pointer-events: none;
+}
+
+/* Floating particles */
+.particle {
+  position: absolute;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: float 15s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+  50% { transform: translateY(-50px) translateX(30px); opacity: 0.5; }
+}
+
+/* SIDEBAR - Responsive */
 .sidebar {
   width: 260px;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.4);
   backdrop-filter: blur(10px);
   height: 100vh;
   padding: 25px 20px;
   position: sticky;
   top: 0;
   border-right: 1px solid rgba(255,255,255,0.1);
+  transition: all 0.3s ease;
 }
 
 .sidebar h2 {
   color: #ff7f50;
   margin-bottom: 30px;
-  font-size: 24px;
+  font-size: clamp(20px, 5vw, 24px);
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .sidebar h2 i {
-  font-size: 28px;
+  font-size: clamp(24px, 6vw, 28px);
 }
 
 .sidebar a {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #ccc;
+  color: rgba(255,255,255,0.8);
   text-decoration: none;
   margin: 8px 0;
   padding: 12px 15px;
   border-radius: 12px;
   transition: all 0.3s ease;
+  font-size: clamp(13px, 3.5vw, 14px);
 }
 
 .sidebar a i {
   width: 22px;
-  font-size: 18px;
+  font-size: clamp(16px, 4vw, 18px);
 }
 
 .sidebar a:hover {
-  background: #ff7f50;
+  background: linear-gradient(135deg, #ff7f50, #ff6347);
   color: white;
   transform: translateX(5px);
 }
 
-/* MAIN */
+/* MAIN - Responsive */
 .main {
   flex: 1;
-  padding: 25px 30px;
+  padding: clamp(20px, 5vw, 30px) clamp(20px, 5vw, 30px);
   overflow-y: auto;
   height: 100vh;
 }
 
-/* TOP BAR */
+/* TOP BAR - Responsive */
 .top-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
 .top-bar h1 {
-  font-size: 28px;
+  font-size: clamp(24px, 6vw, 28px);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -99,14 +132,15 @@ body {
 .btn-group {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .refresh-btn {
-  padding: 10px 20px;
+  padding: clamp(8px, 2.5vw, 10px) clamp(15px, 4vw, 20px);
   border-radius: 25px;
   text-decoration: none;
   color: white;
-  font-size: 14px;
+  font-size: clamp(12px, 3.5vw, 14px);
   transition: all 0.3s ease;
   background: linear-gradient(135deg, #3498db, #2980b9);
   display: flex;
@@ -119,18 +153,19 @@ body {
   box-shadow: 0 5px 15px rgba(52,152,219,0.4);
 }
 
-/* CARDS */
+/* CARDS - Responsive */
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 25px;
   margin-bottom: 40px;
 }
 
 .card {
-  background: white;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(5px);
   color: #333;
-  padding: 25px;
+  padding: clamp(20px, 5vw, 25px);
   border-radius: 20px;
   text-align: center;
   box-shadow: 0 15px 40px rgba(0,0,0,0.2);
@@ -155,13 +190,13 @@ body {
 }
 
 .card i {
-  font-size: 40px;
+  font-size: clamp(35px, 8vw, 40px);
   color: #ff7f50;
   margin-bottom: 15px;
 }
 
 .card h3 {
-  font-size: 16px;
+  font-size: clamp(14px, 3.5vw, 16px);
   color: #666;
   margin-bottom: 10px;
   text-transform: uppercase;
@@ -169,26 +204,35 @@ body {
 }
 
 .card h1 {
-  font-size: 36px;
+  font-size: clamp(30px, 8vw, 36px);
   color: #ff7f50;
   margin-bottom: 5px;
 }
 
 /* SECTION TITLES */
 .section-title {
-  font-size: 22px;
+  font-size: clamp(20px, 5vw, 22px);
   margin: 30px 0 20px 0;
   display: flex;
   align-items: center;
   gap: 10px;
   padding-bottom: 10px;
   border-bottom: 2px solid #ff7f50;
+  flex-wrap: wrap;
 }
 
-/* TABLE */
+.section-title span {
+  background: #ff7f50;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: clamp(12px, 3.5vw, 14px);
+}
+
+/* TABLE - Responsive */
 .table-wrapper {
   overflow-x: auto;
-  background: white;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(5px);
   border-radius: 16px;
   box-shadow: 0 15px 40px rgba(0,0,0,0.2);
   margin-bottom: 30px;
@@ -197,28 +241,29 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background: transparent;
   color: #333;
+  min-width: 600px;
 }
 
 th, td {
-  padding: 15px 12px;
+  padding: clamp(10px, 3vw, 15px) clamp(8px, 2.5vw, 12px);
   text-align: left;
+  font-size: clamp(12px, 3.5vw, 14px);
 }
 
 th {
   background: linear-gradient(135deg, #ff7f50, #ff6347);
   color: white;
   font-weight: 600;
-  font-size: 14px;
 }
 
 tr:nth-child(even) { 
-  background: #f9f9f9; 
+  background: rgba(249,249,249,0.8); 
 }
 
 tr:hover { 
-  background: #f1f1f1; 
+  background: rgba(241,241,241,0.9); 
   transition: 0.2s;
 }
 
@@ -227,7 +272,7 @@ tr:hover {
   display: inline-block;
   padding: 4px 12px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: clamp(11px, 3vw, 12px);
   font-weight: bold;
 }
 
@@ -253,7 +298,7 @@ tr:hover {
   padding: 6px 14px;
   border-radius: 20px;
   text-decoration: none;
-  font-size: 12px;
+  font-size: clamp(11px, 3vw, 12px);
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -271,7 +316,7 @@ tr:hover {
   border: none;
   cursor: pointer;
   color: white;
-  font-size: 12px;
+  font-size: clamp(11px, 3vw, 12px);
   font-weight: bold;
   transition: all 0.3s ease;
   margin: 0 3px;
@@ -291,20 +336,21 @@ tr:hover {
 
 /* NO DATA */
 .no-data {
-  padding: 40px;
+  padding: clamp(30px, 8vw, 40px);
   text-align: center;
   color: #999;
-  background: white;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(5px);
   border-radius: 16px;
 }
 
 .no-data i {
-  font-size: 48px;
+  font-size: clamp(40px, 10vw, 48px);
   margin-bottom: 15px;
   color: #ddd;
 }
 
-/* RESPONSIVE */
+/* RESPONSIVE BREAKPOINTS */
 @media (max-width: 768px) {
   body {
     flex-direction: column;
@@ -322,6 +368,11 @@ tr:hover {
     margin: 5px;
   }
   
+  .sidebar h2 {
+    margin-bottom: 15px;
+    justify-content: center;
+  }
+  
   .main {
     padding: 20px;
   }
@@ -329,17 +380,11 @@ tr:hover {
   .cards {
     grid-template-columns: 1fr;
   }
-  
-  th, td {
-    padding: 10px 8px;
-    font-size: 12px;
-  }
 }
 
 @media (max-width: 480px) {
   .top-bar {
     flex-direction: column;
-    gap: 15px;
   }
   
   .btn-group {
@@ -350,6 +395,63 @@ tr:hover {
     width: 100%;
     justify-content: center;
   }
+  
+  .sidebar a {
+    width: calc(50% - 10px);
+    justify-content: center;
+  }
+  
+  .sidebar h2 {
+    text-align: center;
+  }
+  
+  .action-btn {
+    margin: 3px;
+    width: calc(50% - 6px);
+  }
+  
+  td:last-child {
+    white-space: nowrap;
+  }
+}
+
+/* LANDSCAPE MODE */
+@media (max-width: 768px) and (orientation: landscape) {
+  .sidebar {
+    padding: 10px;
+  }
+  
+  .sidebar a {
+    padding: 8px 12px;
+  }
+  
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* PRINT STYLES */
+@media print {
+  body::before, .particle, .sidebar, .btn-group, .refresh-btn, .action-btn {
+    display: none;
+  }
+  
+  .main {
+    padding: 0;
+    margin: 0;
+  }
+  
+  .card, .table-wrapper, .no-data {
+    background: white;
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+  
+  th {
+    background: #ff7f50;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 }
 </style>
 </head>
@@ -359,7 +461,7 @@ tr:hover {
 <div class="sidebar">
   <h2>
     <i class="fas fa-camera"></i>
-    Admin Panel
+    SnapHire Admin
   </h2>
   <a href="/admin/dashboard">
     <i class="fas fa-tachometer-alt"></i> Dashboard
@@ -483,9 +585,7 @@ tr:hover {
     <i class="fas fa-user-plus"></i>
     Photographer Applications
     {% if applications and applications|length > 0 %}
-      <span style="background: #ff7f50; padding: 2px 10px; border-radius: 20px; font-size: 14px;">
-        {{ applications|length }} New
-      </span>
+      <span>{{ applications|length }} New</span>
     {% endif %}
   </div>
 
@@ -520,12 +620,12 @@ tr:hover {
           </td>
           <td>
             <form action="/admin/approve/{{ app.id }}" method="POST" style="display:inline;">
-              <button type="submit" class="action-btn approve" onclick="return confirm('Approve this photographer?')">
+              <button type="submit" class="action-btn approve">
                 <i class="fas fa-check"></i> Approve
               </button>
             </form>
             <form action="/admin/reject/{{ app.id }}" method="POST" style="display:inline;">
-              <button type="submit" class="action-btn reject" onclick="return confirm('Reject this application?')">
+              <button type="submit" class="action-btn reject">
                 <i class="fas fa-times"></i> Reject
               </button>
             </form>
@@ -545,6 +645,24 @@ tr:hover {
 </div>
 
 <script>
+// Create floating particles
+function createParticles() {
+  for (let i = 0; i < 30; i++) {
+    const particle = document.createElement('div');
+    particle.classList.add('particle');
+    const size = Math.random() * 6 + 2;
+    particle.style.width = size + 'px';
+    particle.style.height = size + 'px';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.top = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 10 + 's';
+    particle.style.animationDuration = Math.random() * 15 + 8 + 's';
+    document.body.appendChild(particle);
+  }
+}
+
+createParticles();
+
 // Confirmation for approve/reject
 document.querySelectorAll('.action-btn').forEach(btn => {
   btn.addEventListener('click', function(e) {

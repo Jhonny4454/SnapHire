@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Order Details - NA Studio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Order Details - SnapHire</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 
@@ -19,13 +19,23 @@
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
   margin: 0;
-  background: #f4f6f9;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  animation: fadeIn 0.6s ease;
+  min-height: 100vh;
+  overflow-x: hidden;
+  width: 100%;
 }
 
-/* HEADER */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* HEADER - Responsive */
 header {
-  background: white;
-  padding: 15px 25px;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
+  padding: clamp(12px, 4vw, 20px) clamp(15px, 5vw, 30px);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -33,29 +43,35 @@ header {
   position: sticky;
   top: 0;
   z-index: 100;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
 .logo {
-  font-size: 24px;
+  font-size: clamp(18px, 6vw, 26px);
   font-weight: bold;
   color: #ff7f50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .logo i {
-  margin-right: 8px;
+  font-size: clamp(20px, 6vw, 28px);
 }
 
 .back-btn {
   text-decoration: none;
-  background: #ff7f50;
+  background: linear-gradient(135deg, #ff7f50, #ff6347);
   color: white;
-  padding: 8px 20px;
+  padding: clamp(8px, 2.5vw, 12px) clamp(15px, 4vw, 22px);
   border-radius: 25px;
   font-weight: bold;
   transition: all 0.3s ease;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  font-size: clamp(12px, 3.5vw, 14px);
 }
 
 .back-btn:hover {
@@ -63,18 +79,19 @@ header {
   transform: translateX(-3px);
 }
 
-/* CONTAINER */
+/* CONTAINER - Responsive */
 .container {
   max-width: 1200px;
-  margin: 40px auto;
-  padding: 20px;
+  width: min(95%, 1200px);
+  margin: clamp(20px, 6vw, 40px) auto;
+  padding: clamp(15px, 4vw, 20px);
 }
 
 /* CARD */
 .card {
   background: white;
   border-radius: 20px;
-  padding: 30px;
+  padding: clamp(20px, 5vw, 35px);
   box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
@@ -84,6 +101,7 @@ header {
   padding-bottom: 15px;
   border-bottom: 2px solid #ff7f50;
   display: inline-block;
+  font-size: clamp(22px, 6vw, 28px);
 }
 
 .card h2 i {
@@ -93,12 +111,13 @@ header {
 
 /* ALERT MESSAGES */
 .alert {
-  padding: 15px 20px;
+  padding: clamp(12px, 3.5vw, 15px) clamp(15px, 4vw, 20px);
   border-radius: 10px;
   margin-bottom: 20px;
   display: flex;
   align-items: center;
   gap: 10px;
+  font-size: clamp(13px, 3.5vw, 14px);
 }
 
 .alert-error {
@@ -120,21 +139,21 @@ header {
 /* ORDER INFO GRID */
 .order-info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
   margin-bottom: 30px;
 }
 
 .info-section {
   background: #f8f9fa;
-  padding: 20px;
+  padding: clamp(15px, 4vw, 20px);
   border-radius: 15px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
 .info-section h3 {
   color: #ff7f50;
-  font-size: 18px;
+  font-size: clamp(16px, 4.5vw, 18px);
   margin-bottom: 15px;
   padding-bottom: 10px;
   border-bottom: 2px solid #ff7f50;
@@ -151,30 +170,33 @@ header {
   gap: 12px;
   margin-bottom: 12px;
   padding: 8px 0;
+  flex-wrap: wrap;
 }
 
 .info-item i {
   color: #ff7f50;
-  font-size: 18px;
+  font-size: clamp(16px, 4vw, 18px);
   width: 25px;
 }
 
 .info-item strong {
   color: #555;
-  min-width: 120px;
+  min-width: clamp(100px, 25vw, 120px);
+  font-size: clamp(12px, 3.5vw, 14px);
 }
 
 .info-item span {
   color: #333;
   font-weight: 500;
+  font-size: clamp(12px, 3.5vw, 14px);
 }
 
 /* STATUS BADGE */
 .status-badge {
   display: inline-block;
-  padding: 5px 15px;
+  padding: clamp(4px, 2vw, 6px) clamp(10px, 3vw, 15px);
   border-radius: 20px;
-  font-size: 13px;
+  font-size: clamp(11px, 3vw, 13px);
   font-weight: bold;
 }
 
@@ -198,10 +220,11 @@ header {
   color: #0c5460;
 }
 
-/* TABLE */
+/* TABLE - Responsive */
 .table-wrapper {
   overflow-x: auto;
   margin: 25px 0;
+  border-radius: 10px;
 }
 
 table {
@@ -210,21 +233,23 @@ table {
   background: white;
   border-radius: 10px;
   overflow: hidden;
+  min-width: 500px;
 }
 
 th {
   text-align: left;
-  padding: 15px 12px;
-  background: #ff7f50;
+  padding: clamp(10px, 3vw, 15px) clamp(8px, 2.5vw, 12px);
+  background: linear-gradient(135deg, #ff7f50, #ff6347);
   color: white;
   font-weight: 600;
-  font-size: 14px;
+  font-size: clamp(12px, 3.5vw, 14px);
 }
 
 td {
-  padding: 15px 12px;
+  padding: clamp(10px, 3vw, 15px) clamp(8px, 2.5vw, 12px);
   border-bottom: 1px solid #eee;
   color: #555;
+  font-size: clamp(12px, 3.5vw, 14px);
 }
 
 tr:hover {
@@ -240,7 +265,7 @@ tr:hover {
 .photographer-name {
   font-weight: bold;
   color: #ff7f50;
-  font-size: 14px;
+  font-size: clamp(12px, 3.5vw, 14px);
 }
 
 .photographer-name i {
@@ -248,7 +273,7 @@ tr:hover {
 }
 
 .photographer-rating {
-  font-size: 12px;
+  font-size: clamp(10px, 3vw, 12px);
   color: #ffc107;
 }
 
@@ -256,18 +281,18 @@ tr:hover {
   margin-right: 2px;
 }
 
-/* BILL SECTION */
+/* BILL SECTION - Responsive */
 .bill-section {
   margin-top: 30px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 15px;
-  padding: 25px;
+  padding: clamp(18px, 4vw, 25px);
   color: white;
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
 .bill-header {
-  font-size: 22px;
+  font-size: clamp(18px, 5vw, 22px);
   font-weight: bold;
   margin-bottom: 20px;
   padding-bottom: 10px;
@@ -283,15 +308,17 @@ tr:hover {
   justify-content: space-between;
   margin-bottom: 15px;
   padding: 10px 0;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .bill-label {
-  font-size: 16px;
+  font-size: clamp(14px, 4vw, 16px);
   opacity: 0.9;
 }
 
 .bill-value {
-  font-size: 18px;
+  font-size: clamp(16px, 4.5vw, 18px);
   font-weight: bold;
 }
 
@@ -301,32 +328,35 @@ tr:hover {
   border-top: 2px solid rgba(255,255,255,0.3);
   display: flex;
   justify-content: space-between;
-  font-size: 24px;
+  font-size: clamp(20px, 5vw, 24px);
   font-weight: bold;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .bill-total .bill-label {
-  font-size: 22px;
+  font-size: clamp(18px, 4.5vw, 22px);
 }
 
 .bill-total .bill-value {
-  font-size: 28px;
+  font-size: clamp(22px, 6vw, 28px);
   color: #ffd700;
 }
 
-/* BUTTONS */
+/* BUTTONS - Responsive */
 .action-buttons {
   display: flex;
   justify-content: space-between;
   gap: 15px;
   margin-top: 30px;
+  flex-wrap: wrap;
 }
 
 .btn {
-  padding: 12px 24px;
+  padding: clamp(10px, 3vw, 12px) clamp(18px, 5vw, 24px);
   border: none;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: clamp(12px, 3.5vw, 14px);
   font-weight: bold;
   cursor: pointer;
   text-decoration: none;
@@ -337,55 +367,52 @@ tr:hover {
 }
 
 .btn-primary {
-  background: #ff7f50;
+  background: linear-gradient(135deg, #ff7f50, #ff6347);
   color: white;
 }
 
 .btn-primary:hover {
-  background: #ff6347;
   transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255,127,80,0.3);
 }
 
 .btn-secondary {
-  background: #6c757d;
+  background: linear-gradient(135deg, #6c757d, #5a6268);
   color: white;
 }
 
 .btn-secondary:hover {
-  background: #5a6268;
   transform: translateY(-2px);
 }
 
 .btn-success {
-  background: #28a745;
+  background: linear-gradient(135deg, #28a745, #218838);
   color: white;
 }
 
 .btn-success:hover {
-  background: #218838;
   transform: translateY(-2px);
 }
 
 .btn-info {
-  background: #17a2b8;
+  background: linear-gradient(135deg, #17a2b8, #138496);
   color: white;
 }
 
 .btn-info:hover {
-  background: #138496;
   transform: translateY(-2px);
 }
 
 /* EMPTY STATE */
 .empty {
   text-align: center;
-  padding: 60px 20px;
+  padding: clamp(40px, 10vw, 60px) 20px;
   color: #888;
-  font-size: 18px;
+  font-size: clamp(14px, 4vw, 18px);
 }
 
 .empty i {
-  font-size: 64px;
+  font-size: clamp(50px, 15vw, 64px);
   color: #ddd;
   margin-bottom: 20px;
 }
@@ -396,9 +423,10 @@ footer {
   padding: 20px;
   color: #888;
   margin-top: 40px;
+  font-size: clamp(11px, 3vw, 14px);
 }
 
-/* RESPONSIVE */
+/* RESPONSIVE BREAKPOINTS */
 @media (max-width: 768px) {
   .container {
     padding: 15px;
@@ -406,11 +434,6 @@ footer {
   
   .card {
     padding: 20px;
-  }
-  
-  th, td {
-    padding: 10px 8px;
-    font-size: 13px;
   }
   
   .order-info-grid {
@@ -423,6 +446,7 @@ footer {
   
   .btn {
     justify-content: center;
+    width: 100%;
   }
   
   .info-item strong {
@@ -431,17 +455,59 @@ footer {
   
   .bill-details {
     flex-direction: column;
-    gap: 10px;
     text-align: center;
   }
   
   .bill-total {
     flex-direction: column;
     text-align: center;
-    gap: 10px;
+  }
+  
+  header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .logo {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .back-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
+@media (max-width: 480px) {
+  .info-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 5px;
+  }
+  
+  .info-item i {
+    width: auto;
+  }
+  
+  .info-section h3 {
+    display: block;
+    text-align: center;
+  }
+}
+
+/* LANDSCAPE MODE */
+@media (max-width: 768px) and (orientation: landscape) {
+  .container {
+    margin: 20px auto;
+  }
+  
+  .order-info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* PRINT STYLES */
 @media print {
   .back-btn, .action-buttons, header, footer {
     display: none;
@@ -456,10 +522,16 @@ footer {
     background: #f8f9fa;
     color: #333;
     border: 1px solid #ddd;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   
   .bill-total .bill-value {
     color: #ff7f50;
+  }
+  
+  .status-badge {
+    border: 1px solid #ccc;
   }
 }
 </style>
@@ -469,7 +541,7 @@ footer {
 
 <header>
   <div class="logo">
-    <i class="fas fa-camera"></i> NA Studio
+    <i class="fas fa-camera"></i> SnapHire
   </div>
   <a href="/orders" class="back-btn">
     <i class="fas fa-arrow-left"></i> Back to Orders
@@ -552,9 +624,9 @@ footer {
         <div class="info-item">
           <i class="fas fa-rupee-sign"></i>
           <strong>Total Amount:</strong>
-          <span style="color: #ff7f50; font-size: 18px; font-weight: bold;">
+          <span style="color: #ff7f50; font-size: clamp(16px, 4.5vw, 18px); font-weight: bold;">
             ₹{{ "%.2f"|format(final_grand) }}
-            <small style="color: #888; font-size: 12px;">(incl. GST)</small>
+            <small style="color: #888; font-size: clamp(10px, 3vw, 12px);">(incl. GST)</small>
           </span>
         </div>
         <div class="info-item">
@@ -567,7 +639,7 @@ footer {
 
     <!-- Packages Table with Photographer Details -->
     {% if items and items|length > 0 %}
-    <h3 style="margin: 20px 0 15px 0; color: #333;">
+    <h3 style="margin: 20px 0 15px 0; color: #333; font-size: clamp(18px, 5vw, 22px);">
       <i class="fas fa-box"></i> Packages & Photographers
     </h3>
     <div class="table-wrapper">
@@ -587,7 +659,7 @@ footer {
             {% set item_quantity = item.quantity|int %}
             {% set item_total = item_price * item_quantity %}
             <tr>
-              <td>
+              <td style="word-break: break-word;">
                 <strong>{{ item.package_name }}</strong>
                 {% if item.duration %}
                   <br><small style="color: #888;">📅 {{ item.duration }}</small>
@@ -595,7 +667,7 @@ footer {
                 {% if item.location %}
                   <br><small style="color: #888;">📍 {{ item.location }}</small>
                 {% endif %}
-               </td>
+              </td>
               <td>
                 <div class="photographer-info">
                   {% if item.photographer_name %}
@@ -621,7 +693,7 @@ footer {
                     <small style="color: #ff7f50;">Will be assigned soon</small>
                   {% endif %}
                 </div>
-               </td>
+              </td>
               <td>₹{{ "%.2f"|format(item_price) }}</td>
               <td>{{ item_quantity }}</td>
               <td>₹{{ "%.2f"|format(item_total) }}</td>
@@ -697,7 +769,7 @@ footer {
 </div>
 
 <footer>
-  <p>&copy; 2026 NA Photography Studio. All rights reserved. | <i class="fas fa-camera"></i> Capturing your special moments</p>
+  <p>&copy; 2026 SnapHire. All rights reserved. | <i class="fas fa-camera"></i> Capturing your special moments</p>
 </footer>
 
 <script>

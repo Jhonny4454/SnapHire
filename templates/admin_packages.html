@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Manage Packages - Admin | NA Studio</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Packages - Admin | SnapHire</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 
@@ -18,67 +18,99 @@ body {
   margin: 0;
   font-family: 'Segoe UI', Arial, sans-serif;
   display: flex;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background-attachment: fixed;
   min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
 }
 
-/* SIDEBAR */
+/* Animated background overlay */
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+  pointer-events: none;
+}
+
+/* Floating particles */
+.particle {
+  position: absolute;
+  background: rgba(255,255,255,0.15);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: float 15s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+  50% { transform: translateY(-50px) translateX(30px); opacity: 0.5; }
+}
+
+/* SIDEBAR - Responsive */
 .sidebar {
   width: 260px;
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(10px);
   color: white;
   height: 100vh;
   padding: 25px 20px;
   position: sticky;
   top: 0;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  border-right: 1px solid rgba(255,255,255,0.1);
+  transition: all 0.3s ease;
 }
 
 .sidebar h2 {
   color: #ff7f50;
   margin-bottom: 30px;
-  font-size: 24px;
+  font-size: clamp(20px, 5vw, 24px);
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .sidebar h2 i {
-  font-size: 28px;
+  font-size: clamp(24px, 6vw, 28px);
 }
 
 .sidebar a {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #ccc;
+  color: rgba(255,255,255,0.8);
   text-decoration: none;
   margin: 8px 0;
   padding: 12px 15px;
   border-radius: 12px;
   transition: all 0.3s ease;
+  font-size: clamp(13px, 3.5vw, 14px);
 }
 
 .sidebar a i {
   width: 22px;
-  font-size: 18px;
+  font-size: clamp(16px, 4vw, 18px);
 }
 
 .sidebar a:hover {
-  background: #ff7f50;
+  background: linear-gradient(135deg, #ff7f50, #ff6347);
   color: white;
   transform: translateX(5px);
 }
 
-/* MAIN */
+/* MAIN - Responsive */
 .main {
   flex: 1;
-  padding: 25px 30px;
+  padding: clamp(20px, 5vw, 30px) clamp(20px, 5vw, 30px);
   overflow-y: auto;
   height: 100vh;
 }
 
-/* TOP BAR */
+/* TOP BAR - Responsive */
 .top-bar {
   display: flex;
   justify-content: space-between;
@@ -86,11 +118,13 @@ body {
   margin-bottom: 25px;
   padding-bottom: 15px;
   border-bottom: 2px solid #ff7f50;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
 .top-bar h1 {
-  font-size: 28px;
-  color: #333;
+  font-size: clamp(24px, 6vw, 28px);
+  color: white;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -104,6 +138,7 @@ body {
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .search-box {
@@ -125,6 +160,7 @@ body {
   width: 250px;
   font-size: 14px;
   transition: all 0.3s ease;
+  background: white;
 }
 
 .search-box input:focus {
@@ -144,6 +180,7 @@ body {
   align-items: center;
   gap: 8px;
   transition: all 0.3s ease;
+  font-size: clamp(12px, 3.5vw, 14px);
 }
 
 .refresh-btn:hover {
@@ -160,6 +197,8 @@ body {
   align-items: center;
   gap: 10px;
   animation: slideDown 0.5s ease;
+  background: rgba(255,255,255,0.95);
+  font-size: clamp(13px, 3.5vw, 14px);
 }
 
 @keyframes slideDown {
@@ -174,13 +213,11 @@ body {
 }
 
 .flash-success {
-  background: #d4edda;
   color: #155724;
   border-left: 4px solid #28a745;
 }
 
 .flash-error {
-  background: #f8d7da;
   color: #721c24;
   border-left: 4px solid #dc3545;
 }
@@ -189,13 +226,14 @@ body {
   font-size: 20px;
 }
 
-/* ADD FORM */
+/* ADD FORM - Glass Morphism */
 .form-card {
-  background: white;
-  padding: 25px;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(5px);
+  padding: clamp(20px, 5vw, 25px);
   border-radius: 20px;
   margin-bottom: 30px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
 
 .form-card h3 {
@@ -204,7 +242,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 20px;
+  font-size: clamp(18px, 5vw, 20px);
 }
 
 .form-grid {
@@ -223,14 +261,14 @@ body {
 .form-group label {
   font-weight: 600;
   color: #555;
-  font-size: 14px;
+  font-size: clamp(12px, 3.5vw, 14px);
 }
 
 .form-group input {
-  padding: 12px;
+  padding: clamp(10px, 3vw, 12px);
   border-radius: 10px;
   border: 1px solid #ddd;
-  font-size: 14px;
+  font-size: clamp(13px, 3.5vw, 14px);
   transition: all 0.3s ease;
 }
 
@@ -243,11 +281,11 @@ body {
 .submit-btn {
   background: linear-gradient(135deg, #2ecc71, #27ae60);
   color: white;
-  padding: 12px 25px;
+  padding: clamp(10px, 3vw, 12px) clamp(20px, 5vw, 25px);
   border: none;
   border-radius: 30px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: clamp(14px, 4vw, 16px);
   font-weight: bold;
   display: inline-flex;
   align-items: center;
@@ -260,37 +298,39 @@ body {
   box-shadow: 0 5px 15px rgba(46,204,113,0.4);
 }
 
-/* TABLE */
+/* TABLE - Responsive */
 .table-wrapper {
   overflow-x: auto;
-  background: white;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(5px);
   border-radius: 20px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px;
 }
 
 th, td {
-  padding: 15px 12px;
+  padding: clamp(10px, 3vw, 15px) clamp(8px, 2.5vw, 12px);
   text-align: left;
+  font-size: clamp(12px, 3.5vw, 14px);
 }
 
 th {
   background: linear-gradient(135deg, #ff7f50, #ff6347);
   color: white;
   font-weight: 600;
-  font-size: 14px;
 }
 
 tr:nth-child(even) {
-  background: #f9f9f9;
+  background: rgba(249,249,249,0.8);
 }
 
 tr:hover {
-  background: #f1f1f1;
+  background: rgba(241,241,241,0.9);
   transition: 0.2s;
 }
 
@@ -303,11 +343,12 @@ tr:hover {
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-/* BUTTONS */
+/* BUTTONS - Responsive */
 .action-buttons {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .edit-btn {
@@ -319,7 +360,7 @@ tr:hover {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
+  font-size: clamp(11px, 3vw, 12px);
   transition: all 0.3s ease;
 }
 
@@ -338,7 +379,7 @@ tr:hover {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
+  font-size: clamp(11px, 3vw, 12px);
   transition: all 0.3s ease;
 }
 
@@ -360,7 +401,7 @@ tr:hover {
   color: #ddd;
 }
 
-/* RESPONSIVE */
+/* RESPONSIVE BREAKPOINTS */
 @media (max-width: 768px) {
   body {
     flex-direction: column;
@@ -378,18 +419,25 @@ tr:hover {
     margin: 5px;
   }
   
+  .sidebar h2 {
+    margin-bottom: 15px;
+    justify-content: center;
+  }
+  
   .main {
     padding: 20px;
   }
   
   .top-bar {
     flex-direction: column;
-    gap: 15px;
   }
   
   .search-section {
     width: 100%;
-    flex-direction: column;
+  }
+  
+  .search-box {
+    flex: 1;
   }
   
   .search-box input {
@@ -400,13 +448,63 @@ tr:hover {
     grid-template-columns: 1fr;
   }
   
-  th, td {
-    padding: 10px 8px;
-    font-size: 12px;
-  }
-  
   .action-buttons {
     flex-direction: column;
+  }
+  
+  .edit-btn, .delete-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar a {
+    width: calc(50% - 10px);
+    justify-content: center;
+  }
+  
+  .sidebar h2 {
+    text-align: center;
+  }
+}
+
+/* LANDSCAPE MODE */
+@media (max-width: 768px) and (orientation: landscape) {
+  .sidebar {
+    padding: 10px;
+  }
+  
+  .sidebar a {
+    padding: 8px 12px;
+  }
+  
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* PRINT STYLES */
+@media print {
+  body::before, .particle, .sidebar, .search-section, .refresh-btn, .action-buttons, .submit-btn {
+    display: none;
+  }
+  
+  .main {
+    padding: 0;
+    margin: 0;
+  }
+  
+  .form-card, .table-wrapper {
+    background: white;
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+  
+  th {
+    background: #ff7f50;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 </style>
@@ -436,6 +534,24 @@ setTimeout(function() {
     }, 500);
   });
 }, 3000);
+
+// Create floating particles
+function createParticles() {
+  for (let i = 0; i < 30; i++) {
+    const particle = document.createElement('div');
+    particle.classList.add('particle');
+    const size = Math.random() * 6 + 2;
+    particle.style.width = size + 'px';
+    particle.style.height = size + 'px';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.top = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 10 + 's';
+    particle.style.animationDuration = Math.random() * 15 + 8 + 's';
+    document.body.appendChild(particle);
+  }
+}
+
+createParticles();
 </script>
 
 </head>
@@ -446,7 +562,7 @@ setTimeout(function() {
 <div class="sidebar">
   <h2>
     <i class="fas fa-camera"></i>
-    Admin Panel
+    SnapHire Admin
   </h2>
   <a href="/admin/dashboard">
     <i class="fas fa-tachometer-alt"></i> Dashboard
@@ -557,7 +673,7 @@ setTimeout(function() {
                  class="pkg-img"
                  onerror="this.onerror=null;this.src='/static/images/default.jpg';"
                  alt="{{ p.package_name }}">
-          </td>
+           </td>
           <td><strong>{{ p.package_name }}</strong></td>
           <td><i class="fas fa-rupee-sign"></i> {{ "%.2f"|format(p.package_price) }}</td>
           <td><i class="fas fa-clock"></i> {{ p.duration }}</td>
@@ -571,7 +687,7 @@ setTimeout(function() {
               </button>
             </form>
           </td>
-        </tr>
+         </tr>
         {% endfor %}
       {% else %}
         <tr>

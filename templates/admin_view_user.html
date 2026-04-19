@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>View User - Admin | NA Studio</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>View User - Admin | SnapHire</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 
@@ -18,67 +18,99 @@ body {
   margin: 0;
   font-family: 'Segoe UI', Arial, sans-serif;
   display: flex;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background-attachment: fixed;
   min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
 }
 
-/* SIDEBAR */
+/* Animated background overlay */
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+  pointer-events: none;
+}
+
+/* Floating particles */
+.particle {
+  position: absolute;
+  background: rgba(255,255,255,0.15);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: float 15s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+  50% { transform: translateY(-50px) translateX(30px); opacity: 0.5; }
+}
+
+/* SIDEBAR - Responsive */
 .sidebar {
   width: 260px;
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(10px);
   color: white;
   height: 100vh;
   padding: 25px 20px;
   position: sticky;
   top: 0;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  border-right: 1px solid rgba(255,255,255,0.1);
+  transition: all 0.3s ease;
 }
 
 .sidebar h2 {
   color: #ff7f50;
   margin-bottom: 30px;
-  font-size: 24px;
+  font-size: clamp(20px, 5vw, 24px);
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .sidebar h2 i {
-  font-size: 28px;
+  font-size: clamp(24px, 6vw, 28px);
 }
 
 .sidebar a {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #ccc;
+  color: rgba(255,255,255,0.8);
   text-decoration: none;
   margin: 8px 0;
   padding: 12px 15px;
   border-radius: 12px;
   transition: all 0.3s ease;
+  font-size: clamp(13px, 3.5vw, 14px);
 }
 
 .sidebar a i {
   width: 22px;
-  font-size: 18px;
+  font-size: clamp(16px, 4vw, 18px);
 }
 
 .sidebar a:hover {
-  background: #ff7f50;
+  background: linear-gradient(135deg, #ff7f50, #ff6347);
   color: white;
   transform: translateX(5px);
 }
 
-/* MAIN */
+/* MAIN - Responsive */
 .main {
   flex: 1;
-  padding: 25px 30px;
+  padding: clamp(20px, 5vw, 30px) clamp(20px, 5vw, 30px);
   overflow-y: auto;
   height: 100vh;
 }
 
-/* TOP BAR */
+/* TOP BAR - Responsive */
 .top-bar {
   display: flex;
   justify-content: space-between;
@@ -86,11 +118,13 @@ body {
   margin-bottom: 25px;
   padding-bottom: 15px;
   border-bottom: 2px solid #ff7f50;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
 .top-bar h1 {
-  font-size: 28px;
-  color: #333;
+  font-size: clamp(24px, 6vw, 28px);
+  color: white;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -101,7 +135,7 @@ body {
 }
 
 .back-btn {
-  background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+  background: rgba(255,255,255,0.15);
   color: white;
   padding: 10px 20px;
   border-radius: 25px;
@@ -110,11 +144,12 @@ body {
   align-items: center;
   gap: 8px;
   transition: all 0.3s ease;
+  font-size: clamp(12px, 3.5vw, 14px);
 }
 
 .back-btn:hover {
+  background: linear-gradient(135deg, #ff7f50, #ff6347);
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(149,165,166,0.4);
 }
 
 /* FLASH MESSAGES */
@@ -126,6 +161,8 @@ body {
   align-items: center;
   gap: 10px;
   animation: slideDown 0.5s ease;
+  background: rgba(255,255,255,0.95);
+  font-size: clamp(13px, 3.5vw, 14px);
 }
 
 @keyframes slideDown {
@@ -140,13 +177,11 @@ body {
 }
 
 .flash-success {
-  background: #d4edda;
   color: #155724;
   border-left: 4px solid #28a745;
 }
 
 .flash-error {
-  background: #f8d7da;
   color: #721c24;
   border-left: 4px solid #dc3545;
 }
@@ -155,24 +190,26 @@ body {
   font-size: 20px;
 }
 
-/* USER PROFILE CARD */
+/* USER PROFILE CARD - Glass Morphism */
 .profile-card {
-  background: white;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.2);
 }
 
 .profile-header {
   background: linear-gradient(135deg, #ff7f50, #ff6347);
-  padding: 30px;
+  padding: clamp(25px, 6vw, 30px);
   text-align: center;
   color: white;
 }
 
 .profile-avatar {
-  width: 100px;
-  height: 100px;
+  width: clamp(80px, 20vw, 100px);
+  height: clamp(80px, 20vw, 100px);
   background: rgba(255,255,255,0.2);
   border-radius: 50%;
   display: flex;
@@ -183,12 +220,12 @@ body {
 }
 
 .profile-avatar i {
-  font-size: 50px;
+  font-size: clamp(40px, 10vw, 50px);
   color: white;
 }
 
 .profile-header h2 {
-  font-size: 24px;
+  font-size: clamp(20px, 5vw, 24px);
   margin-bottom: 5px;
 }
 
@@ -197,13 +234,13 @@ body {
   padding: 4px 15px;
   background: rgba(255,255,255,0.2);
   border-radius: 20px;
-  font-size: 12px;
+  font-size: clamp(11px, 3vw, 12px);
   margin-top: 10px;
 }
 
 /* PROFILE BODY */
 .profile-body {
-  padding: 30px;
+  padding: clamp(20px, 5vw, 30px);
 }
 
 .info-section {
@@ -212,7 +249,7 @@ body {
 
 .info-section h3 {
   color: #ff7f50;
-  font-size: 18px;
+  font-size: clamp(16px, 4.5vw, 18px);
   margin-bottom: 20px;
   display: flex;
   align-items: center;
@@ -223,7 +260,7 @@ body {
 
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
 }
 
@@ -232,18 +269,18 @@ body {
   align-items: flex-start;
   gap: 12px;
   padding: 12px;
-  background: #f8f9fa;
+  background: rgba(248,249,250,0.8);
   border-radius: 12px;
   transition: all 0.3s ease;
 }
 
 .info-item:hover {
   transform: translateX(5px);
-  background: #f1f1f1;
+  background: rgba(241,241,241,0.9);
 }
 
 .info-item i {
-  font-size: 20px;
+  font-size: clamp(18px, 4.5vw, 20px);
   color: #ff7f50;
   margin-top: 2px;
 }
@@ -252,12 +289,12 @@ body {
   font-weight: bold;
   color: #555;
   min-width: 100px;
-  font-size: 14px;
+  font-size: clamp(12px, 3.5vw, 14px);
 }
 
 .info-item .info-value {
   color: #333;
-  font-size: 14px;
+  font-size: clamp(12px, 3.5vw, 14px);
   word-break: break-word;
 }
 
@@ -268,7 +305,7 @@ body {
 
 .orders-section h3 {
   color: #ff7f50;
-  font-size: 18px;
+  font-size: clamp(16px, 4.5vw, 18px);
   margin-bottom: 20px;
   display: flex;
   align-items: center;
@@ -286,35 +323,35 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 500px;
 }
 
 th, td {
-  padding: 12px;
+  padding: clamp(8px, 2.5vw, 12px);
   text-align: left;
+  font-size: clamp(11px, 3vw, 13px);
 }
 
 th {
   background: linear-gradient(135deg, #ff7f50, #ff6347);
   color: white;
   font-weight: 600;
-  font-size: 13px;
 }
 
 td {
   border-bottom: 1px solid #e0e0e0;
   color: #555;
-  font-size: 13px;
 }
 
 tr:hover {
-  background: #f9f9f9;
+  background: rgba(249,249,249,0.8);
 }
 
 .status-badge {
   display: inline-block;
   padding: 3px 10px;
   border-radius: 20px;
-  font-size: 11px;
+  font-size: clamp(10px, 3vw, 11px);
   font-weight: bold;
 }
 
@@ -345,16 +382,17 @@ tr:hover {
   color: #ddd;
 }
 
-/* ACTION BUTTONS */
+/* ACTION BUTTONS - Responsive */
 .action-buttons {
   display: flex;
   gap: 15px;
   margin-top: 30px;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .action-btn {
-  padding: 10px 20px;
+  padding: clamp(8px, 2.5vw, 10px) clamp(16px, 4vw, 20px);
   border: none;
   border-radius: 25px;
   cursor: pointer;
@@ -364,6 +402,7 @@ tr:hover {
   gap: 8px;
   text-decoration: none;
   transition: all 0.3s ease;
+  font-size: clamp(12px, 3.5vw, 14px);
 }
 
 .btn-delete {
@@ -373,10 +412,10 @@ tr:hover {
 
 .btn-delete:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  box-shadow: 0 5px 15px rgba(231,76,60,0.4);
 }
 
-/* RESPONSIVE */
+/* RESPONSIVE BREAKPOINTS */
 @media (max-width: 768px) {
   body {
     flex-direction: column;
@@ -394,6 +433,11 @@ tr:hover {
     margin: 5px;
   }
   
+  .sidebar h2 {
+    margin-bottom: 15px;
+    justify-content: center;
+  }
+  
   .main {
     padding: 20px;
   }
@@ -404,16 +448,81 @@ tr:hover {
   
   .top-bar {
     flex-direction: column;
-    gap: 15px;
+    text-align: center;
   }
   
   .action-buttons {
-    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar a {
+    width: calc(50% - 10px);
+    justify-content: center;
   }
   
-  th, td {
-    padding: 8px;
-    font-size: 11px;
+  .sidebar h2 {
+    text-align: center;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .info-item i {
+    margin: 0 auto;
+  }
+  
+  .action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* LANDSCAPE MODE */
+@media (max-width: 768px) and (orientation: landscape) {
+  .sidebar {
+    padding: 10px;
+  }
+  
+  .sidebar a {
+    padding: 8px 12px;
+  }
+  
+  .info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* PRINT STYLES */
+@media print {
+  body::before, .particle, .sidebar, .back-btn, .action-buttons {
+    display: none;
+  }
+  
+  .main {
+    padding: 0;
+    margin: 0;
+  }
+  
+  .profile-card {
+    background: white;
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+  
+  .profile-header {
+    background: #ff7f50;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  th {
+    background: #ff7f50;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 </style>
@@ -425,7 +534,7 @@ tr:hover {
 <div class="sidebar">
   <h2>
     <i class="fas fa-camera"></i>
-    Admin Panel
+    SnapHire Admin
   </h2>
   <a href="/admin/dashboard">
     <i class="fas fa-tachometer-alt"></i> Dashboard
@@ -625,6 +734,40 @@ tr:hover {
 </div>
 
 </div>
+
+<script>
+// Create floating particles
+function createParticles() {
+  for (let i = 0; i < 30; i++) {
+    const particle = document.createElement('div');
+    particle.classList.add('particle');
+    const size = Math.random() * 6 + 2;
+    particle.style.width = size + 'px';
+    particle.style.height = size + 'px';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.top = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 10 + 's';
+    particle.style.animationDuration = Math.random() * 15 + 8 + 's';
+    document.body.appendChild(particle);
+  }
+}
+
+createParticles();
+
+// Auto-hide flash messages after 3 seconds
+setTimeout(function() {
+  const flashes = document.querySelectorAll('.flash');
+  flashes.forEach(flash => {
+    flash.style.transition = 'opacity 0.5s ease';
+    flash.style.opacity = '0';
+    setTimeout(() => {
+      if (flash.parentNode) {
+        flash.parentNode.removeChild(flash);
+      }
+    }, 500);
+  });
+}, 3000);
+</script>
 
 </body>
 </html>

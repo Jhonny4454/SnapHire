@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Edit Profile - NA Photography Studio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Edit Profile - SnapHire</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -20,6 +20,8 @@ html, body {
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: 100vh;
   animation: fadeIn 0.6s ease;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 @keyframes fadeIn {
@@ -27,11 +29,11 @@ html, body {
   to { opacity: 1; }
 }
 
-/* HEADER */
+/* HEADER - Responsive */
 header {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   color: white;
-  padding: 20px 30px;
+  padding: clamp(15px, 4vw, 20px) clamp(20px, 5vw, 30px);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -39,36 +41,39 @@ header {
   position: sticky;
   top: 0;
   z-index: 100;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
 header h1 {
   color: #ff7f50;
-  font-size: 24px;
+  font-size: clamp(20px, 6vw, 24px);
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 header h1 i {
-  font-size: 28px;
+  font-size: clamp(24px, 6vw, 28px);
 }
 
 .header-buttons {
   display: flex;
-  gap: 12px;
+  gap: clamp(8px, 3vw, 12px);
+  flex-wrap: wrap;
 }
 
 .header-btn {
   background: rgba(255,255,255,0.1);
   color: white;
   text-decoration: none;
-  padding: 8px 16px;
+  padding: clamp(6px, 2vw, 8px) clamp(12px, 4vw, 16px);
   border-radius: 20px;
   display: flex;
   align-items: center;
   gap: 8px;
   transition: all 0.3s ease;
-  font-size: 14px;
+  font-size: clamp(12px, 3.5vw, 14px);
 }
 
 .header-btn:hover {
@@ -76,12 +81,13 @@ header h1 i {
   transform: translateY(-2px);
 }
 
-/* CONTAINER */
+/* CONTAINER - Responsive */
 .container {
-  max-width: 500px;
-  margin: 60px auto;
+  max-width: 550px;
+  width: min(90%, 550px);
+  margin: clamp(30px, 8vw, 60px) auto;
   background: white;
-  padding: 40px;
+  padding: clamp(25px, 6vw, 40px);
   border-radius: 24px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.15);
   animation: slideUp 0.5s ease;
@@ -92,15 +98,15 @@ header h1 i {
   to { transform: translateY(0); opacity: 1; }
 }
 
-/* HEADER SECTION */
+/* HEADER SECTION - Responsive */
 .profile-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: clamp(25px, 6vw, 30px);
 }
 
 .profile-icon {
-  width: 80px;
-  height: 80px;
+  width: clamp(60px, 15vw, 80px);
+  height: clamp(60px, 15vw, 80px);
   background: linear-gradient(135deg, #ff7f50, #ff6347);
   border-radius: 50%;
   display: flex;
@@ -110,7 +116,7 @@ header h1 i {
 }
 
 .profile-icon i {
-  font-size: 40px;
+  font-size: clamp(30px, 8vw, 40px);
   color: white;
 }
 
@@ -118,17 +124,17 @@ h2 {
   text-align: center;
   margin-bottom: 10px;
   color: #333;
-  font-size: 28px;
+  font-size: clamp(24px, 6vw, 28px);
 }
 
 .subtitle {
   text-align: center;
   color: #888;
-  font-size: 14px;
+  font-size: clamp(12px, 3.5vw, 14px);
   margin-bottom: 30px;
 }
 
-/* FORM */
+/* FORM - Responsive */
 .form-group {
   margin-bottom: 20px;
 }
@@ -140,7 +146,7 @@ h2 {
   font-weight: 600;
   color: #555;
   margin-bottom: 8px;
-  font-size: 14px;
+  font-size: clamp(13px, 3.5vw, 14px);
 }
 
 .form-group label i {
@@ -150,10 +156,10 @@ h2 {
 
 input, select {
   width: 100%;
-  padding: 12px 15px;
+  padding: clamp(10px, 3vw, 12px) clamp(12px, 3.5vw, 15px);
   border-radius: 12px;
   border: 2px solid #e0e0e0;
-  font-size: 14px;
+  font-size: clamp(13px, 3.5vw, 14px);
   transition: all 0.3s ease;
   font-family: inherit;
   outline: none;
@@ -168,7 +174,7 @@ input:hover, select:hover {
   border-color: #ff7f50;
 }
 
-/* NAME ROW */
+/* NAME ROW - Responsive */
 .name-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -178,7 +184,7 @@ input:hover, select:hover {
 
 /* HELPER TEXT */
 .helper {
-  font-size: 11px;
+  font-size: clamp(10px, 3vw, 11px);
   color: #999;
   margin-top: 5px;
   display: flex;
@@ -193,36 +199,38 @@ input:hover, select:hover {
 /* PASSWORD NOTE */
 .password-note {
   background: #f8f9fa;
-  padding: 10px 15px;
+  padding: clamp(8px, 2.5vw, 10px) clamp(12px, 3.5vw, 15px);
   border-radius: 10px;
   margin-top: 10px;
-  font-size: 12px;
+  font-size: clamp(11px, 3vw, 12px);
   color: #666;
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .password-note i {
   color: #ff7f50;
 }
 
-/* BUTTONS */
+/* BUTTONS - Responsive */
 .btn-group {
   display: flex;
   gap: 15px;
   margin-top: 25px;
+  flex-wrap: wrap;
 }
 
 button {
   flex: 1;
-  padding: 14px;
+  padding: clamp(12px, 3.5vw, 14px);
   border: none;
   border-radius: 12px;
   background: linear-gradient(135deg, #2ecc71, #27ae60);
   color: white;
   font-weight: bold;
-  font-size: 16px;
+  font-size: clamp(14px, 4vw, 16px);
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
@@ -240,16 +248,22 @@ button:active {
   transform: scale(0.98);
 }
 
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .back-btn {
   flex: 1;
   text-align: center;
   text-decoration: none;
   background: linear-gradient(135deg, #95a5a6, #7f8c8d);
   color: white;
-  padding: 14px;
+  padding: clamp(12px, 3.5vw, 14px);
   border-radius: 12px;
   font-weight: bold;
-  font-size: 16px;
+  font-size: clamp(14px, 4vw, 16px);
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
@@ -265,13 +279,14 @@ button:active {
 
 /* ALERT MESSAGES */
 .alert {
-  padding: 15px 20px;
+  padding: clamp(12px, 3.5vw, 15px) clamp(15px, 4vw, 20px);
   border-radius: 12px;
   margin-bottom: 25px;
   display: flex;
   align-items: center;
   gap: 12px;
   animation: slideDown 0.5s ease;
+  font-size: clamp(13px, 3.5vw, 14px);
 }
 
 @keyframes slideDown {
@@ -301,7 +316,7 @@ button:active {
   font-size: 20px;
 }
 
-/* RESPONSIVE */
+/* RESPONSIVE BREAKPOINTS */
 @media (max-width: 600px) {
   .container {
     margin: 30px 20px;
@@ -319,8 +334,17 @@ button:active {
   
   header {
     flex-direction: column;
-    gap: 15px;
     text-align: center;
+  }
+  
+  .header-buttons {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  header h1 {
+    width: 100%;
+    justify-content: center;
   }
   
   .profile-icon {
@@ -336,6 +360,46 @@ button:active {
     font-size: 24px;
   }
 }
+
+@media (max-width: 480px) {
+  .container {
+    padding: 20px;
+  }
+  
+  .password-note {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+/* LANDSCAPE MODE */
+@media (max-width: 768px) and (orientation: landscape) {
+  .container {
+    margin: 20px auto;
+  }
+  
+  .name-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+}
+
+/* PRINT STYLES */
+@media print {
+  .header-buttons, .btn-group, .back-btn {
+    display: none;
+  }
+  
+  .container {
+    box-shadow: none;
+    margin: 0;
+    padding: 20px;
+  }
+  
+  .alert {
+    border: 1px solid #ccc;
+  }
+}
 </style>
 </head>
 
@@ -344,7 +408,7 @@ button:active {
 <header>
   <h1>
     <i class="fas fa-camera"></i>
-    NA Photography Studio
+    SnapHire
   </h1>
   <div class="header-buttons">
     <a href="/home" class="header-btn">
@@ -514,10 +578,6 @@ document.getElementById('profileForm')?.addEventListener('submit', function(e) {
   const originalText = submitBtn.innerHTML;
   submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
   submitBtn.disabled = true;
-  
-  setTimeout(() => {
-    submitBtn.disabled = false;
-  }, 3000);
 });
 </script>
 
