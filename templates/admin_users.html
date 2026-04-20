@@ -191,7 +191,7 @@ body::before {
 /* STATS CARDS - Responsive */
 .stats-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
   margin-bottom: 30px;
 }
@@ -227,6 +227,12 @@ body::before {
   font-size: clamp(24px, 6vw, 28px);
   font-weight: bold;
   color: #333;
+}
+
+.stat-card .subtext {
+  font-size: 11px;
+  color: #999;
+  margin-top: 5px;
 }
 
 /* FLASH MESSAGES */
@@ -562,7 +568,6 @@ createParticles();
   <a href="/admin/photographers">
     <i class="fas fa-camera-retro"></i> Photographers
   </a>
-  <!-- NEW PORTFOLIO LINK -->
   <a href="/admin/portfolio">
     <i class="fas fa-images"></i> Portfolio
   </a>
@@ -609,31 +614,31 @@ createParticles();
     <h3>Total Users</h3>
     <div class="number">{{ users|length if users else 0 }}</div>
   </div>
+
   <div class="stat-card">
     <i class="fas fa-user-shield"></i>
     <h3>Admin Users</h3>
-    <div class="number">
-      {% set admin_count = 0 %}
-      {% for u in users %}
-        {% if u.role == 'admin' %}
-          {% set admin_count = admin_count + 1 %}
-        {% endif %}
-      {% endfor %}
-      {{ admin_count }}
-    </div>
+    {% set admin_count = 0 %}
+    {% for u in users %}
+      {% if u.role == 'admin' %}
+        {% set admin_count = admin_count + 1 %}
+      {% endif %}
+    {% endfor %}
+    <div class="number">{{ admin_count }}</div>
+    <div class="subtext">Administrator accounts</div>
   </div>
+
   <div class="stat-card">
     <i class="fas fa-user"></i>
     <h3>Regular Users</h3>
-    <div class="number">
-      {% set user_count = 0 %}
-      {% for u in users %}
-        {% if u.role != 'admin' %}
-          {% set user_count = user_count + 1 %}
-        {% endif %}
-      {% endfor %}
-      {{ user_count }}
-    </div>
+    {% set regular_count = 0 %}
+    {% for u in users %}
+      {% if u.role != 'admin' %}
+        {% set regular_count = regular_count + 1 %}
+      {% endif %}
+    {% endfor %}
+    <div class="number">{{ regular_count }}</div>
+    <div class="subtext">Regular customer accounts</div>
   </div>
 </div>
 
@@ -658,23 +663,23 @@ createParticles();
           <td>#{{ u.id }}</td>
           <td>
             <strong>{{ u.first_name }} {{ u.last_name }}</strong>
-           </td>
+          </td>
           <td>
             <i class="fas fa-envelope"></i> {{ u.email }}<br>
             <i class="fas fa-phone"></i> {{ u.mobile if u.mobile else 'N/A' }}
-           </td>
+          </td>
           <td>
             <i class="fas fa-user-circle"></i> {{ u.username }}
-           </td>
+          </td>
           <td>
             <span class="role-badge role-{{ u.role if u.role else 'user' }}">
               <i class="fas fa-{{ 'shield-alt' if u.role == 'admin' else 'user' }}"></i>
               {{ u.role|capitalize if u.role else 'User' }}
             </span>
-           </td>
+          </td>
           <td>
             <i class="fas fa-calendar-alt"></i> {{ u.created_at.strftime('%Y-%m-%d') if u.created_at else 'N/A' }}
-           </td>
+          </td>
           <td class="action-buttons">
             <a href="/admin/view_user/{{ u.id }}" class="view-btn">
               <i class="fas fa-eye"></i> View
@@ -688,15 +693,15 @@ createParticles();
             {% else %}
               <span style="color: #999; font-size: 12px;">Cannot delete admin</span>
             {% endif %}
-           </td>
-         </tr>
+          </td>
+        </tr>
         {% endfor %}
       {% else %}
         <tr>
           <td colspan="7" class="no-data">
             <i class="fas fa-users-slash"></i>
             <p>No users found</p>
-           </td>
+          </td>
         </tr>
       {% endif %}
     </tbody>

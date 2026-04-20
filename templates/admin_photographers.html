@@ -160,6 +160,7 @@ body::before {
   width: 250px;
   font-size: 14px;
   transition: all 0.3s ease;
+  background: white;
 }
 
 .search-box input:focus {
@@ -190,7 +191,7 @@ body::before {
 /* STATS CARDS - Responsive */
 .stats-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
   margin-bottom: 30px;
 }
@@ -226,6 +227,12 @@ body::before {
   font-size: clamp(24px, 6vw, 28px);
   font-weight: bold;
   color: #333;
+}
+
+.stat-card .subtext {
+  font-size: 11px;
+  color: #999;
+  margin-top: 5px;
 }
 
 /* FLASH MESSAGES */
@@ -603,7 +610,6 @@ createParticles();
   <a href="/admin/photographers">
     <i class="fas fa-camera-retro"></i> Photographers
   </a>
-  <!-- NEW PORTFOLIO LINK -->
   <a href="/admin/portfolio">
     <i class="fas fa-images"></i> Portfolio
   </a>
@@ -650,33 +656,38 @@ createParticles();
     <h3>Total Photographers</h3>
     <div class="number">{{ photographers|length if photographers else 0 }}</div>
   </div>
+
   <div class="stat-card">
     <i class="fas fa-star"></i>
     <h3>Average Rating</h3>
-    <div class="number">
-      {% set total_rating = 0 %}
-      {% set count = 0 %}
-      {% for p in photographers %}
-        {% if p.rating %}
-          {% set total_rating = total_rating + p.rating %}
-          {% set count = count + 1 %}
-        {% endif %}
-      {% endfor %}
-      {{ "%.1f"|format(total_rating / count if count > 0 else 0) }}
-    </div>
+    {% set total_rating = 0 %}
+    {% set count = 0 %}
+    {% for p in photographers %}
+      {% if p.rating and p.rating > 0 %}
+        {% set total_rating = total_rating + p.rating %}
+        {% set count = count + 1 %}
+      {% endif %}
+    {% endfor %}
+    {% if count > 0 %}
+      <div class="number">{{ "%.1f"|format(total_rating / count) }}</div>
+      <div class="subtext">Based on {{ count }} rated photographer(s)</div>
+    {% else %}
+      <div class="number">—</div>
+      <div class="subtext">No ratings yet</div>
+    {% endif %}
   </div>
+
   <div class="stat-card">
     <i class="fas fa-check-circle"></i>
     <h3>Active Photographers</h3>
-    <div class="number">
-      {% set active_count = 0 %}
-      {% for p in photographers %}
-        {% if p.status == 'active' %}
-          {% set active_count = active_count + 1 %}
-        {% endif %}
-      {% endfor %}
-      {{ active_count }}
-    </div>
+    {% set active_count = 0 %}
+    {% for p in photographers %}
+      {% if p.status == 'active' %}
+        {% set active_count = active_count + 1 %}
+      {% endif %}
+    {% endfor %}
+    <div class="number">{{ active_count }}</div>
+    <div class="subtext">Out of {{ photographers|length if photographers else 0 }} total</div>
   </div>
 </div>
 
@@ -701,18 +712,18 @@ createParticles();
           <td>#{{ p.id }}</td>
           <td>
             <strong>{{ p.first_name }} {{ p.last_name }}</strong>
-           </td>
+          </td>
           <td>
             <i class="fas fa-envelope"></i> {{ p.email }}<br>
             <i class="fas fa-phone"></i> {{ p.phone if p.phone else 'N/A' }}
-           </td>
+          </td>
           <td>
             {% if p.experience %}
               <i class="fas fa-briefcase"></i> {{ p.experience }}
             {% else %}
               <span style="color: #999;">Not specified</span>
             {% endif %}
-           </td>
+          </td>
           <td class="rating">
             {% if p.rating and p.rating > 0 %}
               {% for i in range(1,6) %}
@@ -739,7 +750,6 @@ createParticles();
             <a href="/admin/edit_photographer/{{ p.id }}" class="edit-btn">
               <i class="fas fa-edit"></i> Edit
             </a>
-            <!-- NEW PORTFOLIO BUTTON -->
             <a href="/admin/portfolio" class="portfolio-btn">
               <i class="fas fa-images"></i> Portfolio
             </a>
