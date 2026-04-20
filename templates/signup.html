@@ -17,7 +17,6 @@
 html, body {
   margin: 0;
   font-family: 'Segoe UI', 'Arial', sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
   height: auto;
   display: flex;
@@ -29,60 +28,75 @@ html, body {
   overflow-y: auto;
 }
 
-/* Simple static background - NO ANIMATION */
+/* Professional background image with overlay */
+body {
+  background: url('https://images.unsplash.com/photo-1542038784456-1ea8e935640e?ixlib=rb-4.0.3&w=1920&h=1080&fit=crop') center/cover no-repeat fixed;
+  position: relative;
+}
+
 body::before {
   content: "";
   position: absolute;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 60%);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 100%);
   pointer-events: none;
 }
 
-/* Simple floating particles - reduced for better performance */
+/* Floating particles – subtle */
 .particle {
   position: absolute;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.2);
   border-radius: 50%;
   pointer-events: none;
+  animation: float 12s infinite ease-in-out;
 }
 
-/* LOGIN CONTAINER */
+@keyframes float {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  50% { transform: translateY(-30px) translateX(20px); opacity: 0.4; }
+  100% { transform: translateY(0) translateX(0); opacity: 0; }
+}
+
+/* LOGIN CONTAINER – Enhanced glassmorphism */
 .login-container {
-  background: rgba(255,255,255,0.98);
-  backdrop-filter: blur(10px);
-  padding: clamp(25px, 7vw, 40px);
-  border-radius: 24px;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(12px);
+  padding: clamp(30px, 7vw, 45px);
+  border-radius: 28px;
   width: 100%;
-  max-width: 420px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-  border: 1px solid rgba(255,255,255,0.3);
+  max-width: 450px;
+  box-shadow: 0 25px 45px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.2);
   position: relative;
   z-index: 10;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.3);
 }
 
 .login-container:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+  transform: translateY(-5px);
+  box-shadow: 0 35px 55px rgba(0,0,0,0.3);
 }
 
 /* Logo Section */
 .logo-section {
   text-align: center;
-  margin-bottom: 25px;
+  margin-bottom: 28px;
 }
 
 .logo-icon {
-  width: 65px;
-  height: 65px;
+  width: 75px;
+  height: 75px;
   background: linear-gradient(135deg, #ff7f50, #ff6347);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 15px;
+  margin: 0 auto 18px;
   transition: transform 0.3s ease;
+  box-shadow: 0 10px 20px rgba(255,127,80,0.3);
 }
 
 .logo-icon:hover {
@@ -90,15 +104,17 @@ body::before {
 }
 
 .logo-icon i {
-  font-size: 30px;
+  font-size: 34px;
   color: white;
 }
 
 h2 {
   text-align: center;
   margin-bottom: 8px;
-  color: #333;
-  font-size: clamp(24px, 6vw, 28px);
+  color: #2c3e50;
+  font-size: clamp(26px, 6vw, 32px);
+  font-weight: 700;
+  letter-spacing: -0.5px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -107,42 +123,45 @@ h2 {
 
 .subtitle {
   text-align: center;
-  color: #888;
-  font-size: 13px;
-  margin-bottom: 25px;
+  color: #5d6d7e;
+  font-size: 14px;
+  margin-bottom: 30px;
+  font-weight: 400;
 }
 
 /* Input Groups */
 .input-group {
   position: relative;
-  margin-bottom: 18px;
+  margin-bottom: 22px;
 }
 
 .input-group i {
   position: absolute;
   top: 50%;
-  left: 14px;
+  left: 16px;
   transform: translateY(-50%);
-  color: #999;
+  color: #a0a0a0;
   z-index: 1;
   transition: color 0.3s ease;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .input-group input {
   width: 100%;
-  padding: 12px 12px 12px 42px;
-  border-radius: 12px;
-  border: 1.5px solid #e0e0e0;
+  padding: 14px 14px 14px 46px;
+  border-radius: 16px;
+  border: 1.5px solid #e2e8f0;
   outline: none;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  font-size: 14px;
+  transition: all 0.3s ease;
+  font-size: 15px;
   background: white;
+  font-weight: 500;
+  color: #1e293b;
 }
 
 .input-group input:focus {
   border-color: #ff7f50;
-  box-shadow: 0 0 0 3px rgba(255,127,80,0.1);
+  box-shadow: 0 0 0 4px rgba(255,127,80,0.15);
 }
 
 .input-group input:focus + i {
@@ -153,13 +172,13 @@ h2 {
 .toggle-password {
   position: absolute;
   top: 50%;
-  right: 14px;
+  right: 16px;
   transform: translateY(-50%);
   cursor: pointer;
-  color: #999;
+  color: #a0a0a0;
   transition: color 0.3s ease;
   z-index: 2;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .toggle-password:hover {
@@ -169,26 +188,27 @@ h2 {
 /* Button */
 .login-btn {
   width: 100%;
-  padding: 12px;
-  margin-top: 20px;
+  padding: 14px;
+  margin-top: 28px;
   border: none;
-  border-radius: 30px;
+  border-radius: 40px;
   background: linear-gradient(135deg, #ff7f50, #ff6347);
   color: white;
-  font-size: 15px;
-  font-weight: bold;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 8px 20px rgba(255,127,80,0.3);
+  box-shadow: 0 8px 20px rgba(255,127,80,0.35);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
+  letter-spacing: 0.5px;
 }
 
 .login-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 25px rgba(255,127,80,0.4);
+  box-shadow: 0 15px 30px rgba(255,127,80,0.45);
 }
 
 .login-btn:active {
@@ -198,36 +218,38 @@ h2 {
 /* Sign Up Link */
 .signup-link {
   text-align: center;
-  margin-top: 20px;
-  padding-top: 18px;
-  border-top: 1px solid #e0e0e0;
+  margin-top: 25px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(0,0,0,0.08);
 }
 
 .signup-link a {
   text-decoration: none;
   color: #ff7f50;
-  font-weight: bold;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  transition: color 0.3s ease;
-  font-size: 13px;
+  gap: 8px;
+  transition: all 0.3s ease;
+  font-size: 14px;
 }
 
 .signup-link a:hover {
   color: #ff6347;
+  gap: 12px;
 }
 
 /* Forgot Password */
 .forgot-link {
   text-align: right;
-  margin-bottom: 5px;
+  margin-top: -8px;
+  margin-bottom: 8px;
 }
 
 .forgot-link a {
   text-decoration: none;
-  color: #999;
-  font-size: 11px;
+  color: #7f8c8d;
+  font-size: 12px;
   transition: color 0.3s ease;
 }
 
@@ -240,14 +262,15 @@ h2 {
   margin-top: 15px;
   text-align: center;
   color: #e74c3c;
-  font-size: 12px;
+  font-size: 13px;
   background: rgba(231,76,60,0.1);
-  padding: 10px;
-  border-radius: 10px;
+  padding: 12px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
+  backdrop-filter: blur(4px);
 }
 
 /* Responsive */
@@ -257,30 +280,30 @@ h2 {
   }
   
   .login-container {
-    padding: 20px;
+    padding: 25px;
   }
   
   .logo-icon {
-    width: 55px;
-    height: 55px;
+    width: 60px;
+    height: 60px;
   }
   
   .logo-icon i {
-    font-size: 26px;
+    font-size: 28px;
   }
   
   .input-group input {
-    padding: 10px 10px 10px 38px;
+    padding: 12px 12px 12px 42px;
   }
   
   .input-group i {
-    left: 12px;
-    font-size: 13px;
+    left: 14px;
+    font-size: 14px;
   }
   
   .login-btn {
-    padding: 10px;
-    font-size: 14px;
+    padding: 12px;
+    font-size: 15px;
   }
 }
 
@@ -298,8 +321,8 @@ h2 {
   }
   
   .logo-icon {
-    width: 50px;
-    height: 50px;
+    width: 55px;
+    height: 55px;
   }
   
   .subtitle {
@@ -309,16 +332,20 @@ h2 {
 
 /* Print styles */
 @media print {
-  body::before, .particle {
+  body {
+    background: white;
+  }
+  body::before {
     display: none;
   }
-  
+  .particle {
+    display: none;
+  }
   .login-container {
     background: white;
     box-shadow: none;
     border: 1px solid #ddd;
   }
-  
   .login-btn {
     display: none;
   }
@@ -392,17 +419,18 @@ function togglePassword() {
   }
 }
 
-// Create simple static particles (no animation for better performance)
+// Create subtle floating particles (reduced for performance)
 function createParticles() {
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 25; i++) {
     const particle = document.createElement('div');
     particle.classList.add('particle');
-    const size = Math.random() * 4 + 1;
+    const size = Math.random() * 6 + 2;
     particle.style.width = size + 'px';
     particle.style.height = size + 'px';
     particle.style.left = Math.random() * 100 + '%';
     particle.style.top = Math.random() * 100 + '%';
-    particle.style.opacity = Math.random() * 0.3;
+    particle.style.animationDelay = Math.random() * 10 + 's';
+    particle.style.animationDuration = Math.random() * 15 + 8 + 's';
     document.body.appendChild(particle);
   }
 }
