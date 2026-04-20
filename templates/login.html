@@ -2,214 +2,369 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Login - NA Photography Studio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Login - SnapHire</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
 <style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 html, body {
   margin: 0;
-  font-family: 'Arial', sans-serif;
-  height: 100vh;
+  font-family: 'Segoe UI', 'Arial', sans-serif;
+  min-height: 100vh;
+  height: auto;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #ff7f50, #ff9966);
-  overflow: hidden;
+  padding: 20px;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Professional background image with overlay */
+body {
+  background: url('https://images.unsplash.com/photo-1542038784456-1ea8e935640e?ixlib=rb-4.0.3&w=1920&h=1080&fit=crop') center/cover no-repeat fixed;
   position: relative;
 }
 
-/* BACKGROUND GLOW EFFECT */
 body::before {
   content: "";
   position: absolute;
-  width: 600px;
-  height: 600px;
-  background: rgba(255,255,255,0.15);
-  filter: blur(120px);
-  top: -100px;
-  left: -100px;
-  border-radius: 50%;
-  z-index: -2;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 100%);
+  pointer-events: none;
 }
 
-body::after {
-  content: "";
+/* Floating particles – subtle */
+.particle {
   position: absolute;
-  width: 500px;
-  height: 500px;
-  background: rgba(0,0,0,0.15);
-  filter: blur(120px);
-  bottom: -100px;
-  right: -100px;
+  background: rgba(255,255,255,0.2);
   border-radius: 50%;
-  z-index: -2;
+  pointer-events: none;
+  animation: float 12s infinite ease-in-out;
 }
 
-/* CONTAINER */
+@keyframes float {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  50% { transform: translateY(-30px) translateX(20px); opacity: 0.4; }
+  100% { transform: translateY(0) translateX(0); opacity: 0; }
+}
+
+/* LOGIN CONTAINER – Enhanced glassmorphism */
 .login-container {
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(12px);
+  padding: clamp(30px, 7vw, 45px);
+  border-radius: 28px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 25px 45px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.2);
   position: relative;
-  backdrop-filter: blur(20px);
-  background: rgba(255,255,255,0.15);
-  border-radius: 20px;
-  padding: 40px;
-  width: 340px;
-  max-width: 90%;
-  box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+  z-index: 10;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   border: 1px solid rgba(255,255,255,0.3);
-  animation: slideUp 0.7s ease;
-  z-index: 1;
 }
 
-/* ANIMATION */
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(50px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+.login-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 35px 55px rgba(0,0,0,0.3);
+}
+
+/* Logo Section */
+.logo-section {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.logo-icon {
+  width: 75px;
+  height: 75px;
+  background: linear-gradient(135deg, #ff7f50, #ff6347);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+  transition: transform 0.3s ease;
+  box-shadow: 0 10px 20px rgba(255,127,80,0.3);
+}
+
+.logo-icon:hover {
+  transform: scale(1.05);
+}
+
+.logo-icon i {
+  font-size: 34px;
+  color: white;
 }
 
 h2 {
   text-align: center;
-  margin-bottom: 25px;
-  color: white;
-  letter-spacing: 1px;
+  margin-bottom: 8px;
+  color: #2c3e50;
+  font-size: clamp(26px, 6vw, 32px);
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
-/* INPUT GROUP */
+.subtitle {
+  text-align: center;
+  color: #5d6d7e;
+  font-size: 14px;
+  margin-bottom: 30px;
+  font-weight: 400;
+}
+
+/* Input Groups */
 .input-group {
   position: relative;
-  margin-bottom: 18px;
+  margin-bottom: 22px;
 }
 
 .input-group i {
   position: absolute;
   top: 50%;
-  left: 14px;
+  left: 16px;
   transform: translateY(-50%);
-  color: #eee;
+  color: #a0a0a0;
+  z-index: 1;
+  transition: color 0.3s ease;
   font-size: 16px;
 }
 
-input {
+.input-group input {
   width: 100%;
-  padding: 12px 12px 12px 40px;
-  border-radius: 12px;
-  border: none;
+  padding: 14px 14px 14px 46px;
+  border-radius: 16px;
+  border: 1.5px solid #e2e8f0;
   outline: none;
-  font-size: 14px;
-  background: rgba(255,255,255,0.2);
-  color: white;
-  backdrop-filter: blur(10px);
-  box-sizing: border-box;
+  transition: all 0.3s ease;
+  font-size: 15px;
+  background: white;
+  font-weight: 500;
+  color: #1e293b;
 }
 
-input::placeholder {
-  color: #ddd;
+.input-group input:focus {
+  border-color: #ff7f50;
+  box-shadow: 0 0 0 4px rgba(255,127,80,0.15);
 }
 
-input:focus {
-  box-shadow: 0 0 12px rgba(255,255,255,0.6);
-  background: rgba(255,255,255,0.3);
+.input-group input:focus + i {
+  color: #ff7f50;
 }
 
-/* BUTTON (FIXED) */
-button {
+/* Button */
+.login-btn {
   width: 100%;
-  padding: 12px;
-  margin-top: 15px;
+  padding: 14px;
+  margin-top: 28px;
   border: none;
-  border-radius: 30px;
-  background: linear-gradient(45deg, #ff7f50, #ff6347);
+  border-radius: 40px;
+  background: linear-gradient(135deg, #ff7f50, #ff6347);
   color: white;
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 700;
   cursor: pointer;
-
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 20px rgba(255,127,80,0.35);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-
-  box-sizing: border-box;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  gap: 10px;
+  letter-spacing: 0.5px;
 }
 
-button:hover {
-  transform: translateY(-3px) scale(1.04);
-  box-shadow: 0 15px 35px rgba(255,127,80,0.6);
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px rgba(255,127,80,0.45);
 }
 
-button:active {
-  transform: scale(0.92);
+.login-btn:active {
+  transform: scale(0.98);
 }
 
-button::after {
-  content: "";
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  left: -100%;
-  top: 0;
-  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.4), transparent);
-  transition: all 0.6s ease;
-}
-button:hover::after {
-  left: 100%;
-}
-
-/* ERROR */
-.error {
-  margin-top: 12px;
-  text-align: center;
-  color: #ffdddd;
-  font-size: 14px;
-}
-
-/* SIGNUP BUTTON (MATCHED FIX) */
+/* Sign Up Link */
 .signup-link {
-  margin-top: 15px;
+  text-align: center;
+  margin-top: 25px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(0,0,0,0.08);
 }
 
 .signup-link a {
-  width: 100%;
-  padding: 12px;
-  border-radius: 30px;
+  text-decoration: none;
+  color: #ff7f50;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
 
+.signup-link a:hover {
+  color: #ff6347;
+  gap: 12px;
+}
+
+/* Forgot Password (optional) */
+.forgot-link {
+  text-align: right;
+  margin-top: -8px;
+  margin-bottom: 8px;
+}
+
+.forgot-link a {
+  text-decoration: none;
+  color: #7f8c8d;
+  font-size: 12px;
+  transition: color 0.3s ease;
+}
+
+.forgot-link a:hover {
+  color: #ff7f50;
+}
+
+/* Error Message */
+.error {
+  margin-top: 15px;
+  text-align: center;
+  color: #e74c3c;
+  font-size: 13px;
+  background: rgba(231,76,60,0.1);
+  padding: 12px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-
-  background: rgba(0,0,0,0.5);
-  color: white;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 16px;
-
-  box-sizing: border-box;
-  transition: all 0.3s ease;
+  backdrop-filter: blur(4px);
 }
 
-.signup-link a:hover {
-  background: linear-gradient(45deg, #ff7f50, #ff6347);
-  transform: scale(1.05);
-}
-
-/* FOOT TEXT */
-p {
-  position: absolute;
+/* Work With Us footer */
+.footer-note {
+  position: fixed;
   bottom: 20px;
-  width: 100%;
+  left: 0;
+  right: 0;
   text-align: center;
   color: white;
   font-size: 14px;
-  margin: 0;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  z-index: 20;
 }
-p a {
-  color: #fff;
+
+.footer-note a {
+  color: #ff7f50;
   font-weight: bold;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-note a:hover {
+  color: #ff6347;
   text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  html, body {
+    padding: 15px;
+  }
+  
+  .login-container {
+    padding: 25px;
+  }
+  
+  .logo-icon {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .logo-icon i {
+    font-size: 28px;
+  }
+  
+  .input-group input {
+    padding: 12px 12px 12px 42px;
+  }
+  
+  .input-group i {
+    left: 14px;
+    font-size: 14px;
+  }
+  
+  .login-btn {
+    padding: 12px;
+    font-size: 15px;
+  }
+  
+  .footer-note {
+    font-size: 12px;
+    bottom: 10px;
+  }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+  html, body {
+    padding: 20px;
+  }
+  
+  .login-container {
+    padding: 20px;
+  }
+  
+  .logo-section {
+    margin-bottom: 15px;
+  }
+  
+  .logo-icon {
+    width: 55px;
+    height: 55px;
+  }
+  
+  .subtitle {
+    margin-bottom: 20px;
+  }
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white;
+  }
+  body::before {
+    display: none;
+  }
+  .particle {
+    display: none;
+  }
+  .login-container {
+    background: white;
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+  .login-btn {
+    display: none;
+  }
+  .footer-note {
+    display: none;
+  }
 }
 </style>
 </head>
@@ -217,34 +372,96 @@ p a {
 <body>
 
 <div class="login-container">
-  <h2>User Login</h2>
+  <div class="logo-section">
+    <div class="logo-icon">
+      <i class="fas fa-camera"></i>
+    </div>
+    <h2>
+      <i class="fas fa-camera"></i>
+      SnapHire
+    </h2>
+    <p class="subtitle">Welcome back! Please login to your account</p>
+  </div>
+
+  {% if error %}
+    <div class="error">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ error }}
+    </div>
+  {% endif %}
 
   <form method="POST" action="/">
     <div class="input-group">
       <i class="fas fa-user"></i>
-      <input type="text" name="username" placeholder="Username" required>
+      <input type="text" name="username" placeholder="Username" required autofocus>
     </div>
+
     <div class="input-group">
       <i class="fas fa-lock"></i>
-      <input type="password" name="password" placeholder="Password" required>
+      <input type="password" id="password" name="password" placeholder="Password" required>
     </div>
-    <button type="submit">
+
+    <div class="forgot-link">
+      <a href="#">Forgot Password?</a>
+    </div>
+
+    <button type="submit" class="login-btn">
       <i class="fas fa-sign-in-alt"></i> Login
     </button>
   </form>
 
-  {% if error %}
-    <div class="error">{{ error }}</div>
-  {% endif %}
-
   <div class="signup-link">
     <a href="/signup">
-      <i class="fas fa-user-plus"></i> Create an account
+      <i class="fas fa-user-plus"></i> Don't have an account? Sign Up
     </a>
   </div>
 </div>
 
-<p>New to our studio? <a href="/get-hired">Work With US! </a></p>
+<div class="footer-note">
+  New to our studio? <a href="/get-hired">Work With Us!</a>
+</div>
+
+<script>
+// Toggle password visibility (optional, added for better UX)
+const togglePassword = document.createElement('i');
+togglePassword.classList.add('fas', 'fa-eye', 'toggle-password');
+togglePassword.style.position = 'absolute';
+togglePassword.style.top = '50%';
+togglePassword.style.right = '16px';
+togglePassword.style.transform = 'translateY(-50%)';
+togglePassword.style.cursor = 'pointer';
+togglePassword.style.color = '#a0a0a0';
+togglePassword.style.zIndex = '2';
+togglePassword.style.fontSize = '16px';
+
+const passwordInput = document.querySelector('input[name="password"]');
+const inputGroup = passwordInput.closest('.input-group');
+inputGroup.appendChild(togglePassword);
+
+togglePassword.addEventListener('click', function() {
+  const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+  passwordInput.setAttribute('type', type);
+  this.classList.toggle('fa-eye');
+  this.classList.toggle('fa-eye-slash');
+});
+
+// Create subtle floating particles
+function createParticles() {
+  for (let i = 0; i < 25; i++) {
+    const particle = document.createElement('div');
+    particle.classList.add('particle');
+    const size = Math.random() * 6 + 2;
+    particle.style.width = size + 'px';
+    particle.style.height = size + 'px';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.top = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 10 + 's';
+    particle.style.animationDuration = Math.random() * 15 + 8 + 's';
+    document.body.appendChild(particle);
+  }
+}
+createParticles();
+</script>
 
 </body>
 </html>
