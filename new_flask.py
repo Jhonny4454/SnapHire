@@ -379,6 +379,29 @@ def admin_portfolio():
     
     return render_template("admin_portfolio.html", photographers=photographers)
 
+# ---------------- ADMIN: VIEW ALL PORTFOLIO IMAGES FOR A PHOTOGRAPHER ----------------
+@app.route("/admin/portfolio/images/<int:photographer_id>")
+@admin_required
+def admin_portfolio_images(photographer_id):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    
+    cursor.execute("SELECT first_name, last_name FROM photographers WHERE id = %s", (photographer_id,))
+    photographer = cursor.fetchone()
+    if not photographer:
+        flash("Photographer not found!", "error")
+        return redirect("/admin/portfolio")
+    
+    cursor.execute("""
+        SELECT * FROM portfolio_images 
+        WHERE photographer_id = %s 
+        ORDER BY shoot_date DESC, created_at DESC
+    """, (photographer_id,))
+    images = cursor.fetchall()
+    
+    cursor.close()
+    return render_template("admin_portfolio_images.html", photographer=photographer, images=images)
+
 # ---------------- ADMIN: ADD PORTFOLIO IMAGE FOR A PHOTOGRAPHER ----------------
 @app.route("/admin/portfolio/add/<int:photographer_id>", methods=["GET", "POST"])
 @admin_required
@@ -424,6 +447,53 @@ def admin_add_portfolio_image(photographer_id):
     
     return render_template("admin_add_portfolio_image.html", photographer=photographer)
 
+# ---------------- ADMIN: EDIT PORTFOLIO IMAGE ----------------
+@app.route("/admin/portfolio/edit/<int:image_id>", methods=["GET", "POST"])
+@admin_required
+def admin_edit_portfolio_image(image_id):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    
+    if request.method == "POST":
+        image_url = request.form.get("image_url")
+        location = request.form.get("location")
+        shoot_date = request.form.get("shoot_date")
+        description = request.form.get("description")
+        
+        try:
+            cursor.execute("""
+                UPDATE portfolio_images 
+                SET image_url = %s, location = %s, shoot_date = %s, description = %s
+                WHERE id = %s
+            """, (image_url, location, shoot_date, description, image_id))
+            db.commit()
+            flash("✅ Portfolio image updated successfully!", "success")
+            cursor.execute("SELECT photographer_id FROM portfolio_images WHERE id = %s", (image_id,))
+            result = cursor.fetchone()
+            if result:
+                return redirect(f"/admin/portfolio/images/{result['photographer_id']}")
+        except Exception as e:
+            print("Edit Portfolio Error:", e)
+            db.rollback()
+            flash("❌ Error updating image", "error")
+        finally:
+            cursor.close()
+        return redirect("/admin/portfolio")
+    
+    # GET - show edit form
+    cursor.execute("SELECT * FROM portfolio_images WHERE id = %s", (image_id,))
+    image = cursor.fetchone()
+    if not image:
+        flash("Image not found!", "error")
+        cursor.close()
+        return redirect("/admin/portfolio")
+    
+    cursor.execute("SELECT first_name, last_name FROM photographers WHERE id = %s", (image['photographer_id'],))
+    photographer = cursor.fetchone()
+    cursor.close()
+    
+    return render_template("admin_edit_portfolio_image.html", image=image, photographer=photographer)
+
 # ---------------- ADMIN: DELETE PORTFOLIO IMAGE ----------------
 @app.route("/admin/portfolio/delete/<int:image_id>", methods=["POST"])
 @admin_required
@@ -464,7 +534,7 @@ def edit_photographer(id):
             status = request.form.get("status")
             profile_image = request.form.get("profile_image")
             
-            # 🔥 FIX: Handle empty rating value (convert to None)
+            # Handle empty rating value
             if rating is not None and rating.strip() != '':
                 rating = float(rating)
             else:

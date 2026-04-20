@@ -238,8 +238,8 @@ tr:hover {
 }
 
 /* BUTTONS */
-.btn-add {
-  background: linear-gradient(135deg, #2ecc71, #27ae60);
+.btn-manage {
+  background: linear-gradient(135deg, #3498db, #2980b9);
   color: white;
   padding: 6px 15px;
   border-radius: 20px;
@@ -253,9 +253,9 @@ tr:hover {
   cursor: pointer;
 }
 
-.btn-add:hover {
+.btn-manage:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(46,204,113,0.4);
+  box-shadow: 0 5px 15px rgba(52,152,219,0.4);
 }
 
 /* NO DATA */
@@ -318,7 +318,7 @@ tr:hover {
     text-align: center;
   }
   
-  .btn-add {
+  .btn-manage {
     width: 100%;
     justify-content: center;
   }
@@ -341,7 +341,7 @@ tr:hover {
 
 /* PRINT STYLES */
 @media print {
-  body::before, .particle, .sidebar, .refresh-btn, .btn-add {
+  body::before, .particle, .sidebar, .refresh-btn, .btn-manage {
     display: none;
   }
   
@@ -444,8 +444,8 @@ tr:hover {
             </span>
           </td>
           <td>
-            <a href="/admin/portfolio/add/{{ p.id }}" class="btn-add">
-              <i class="fas fa-plus-circle"></i> Add Image
+            <a href="/admin/portfolio/images/{{ p.id }}" class="btn-manage">
+              <i class="fas fa-images"></i> Manage Images
             </a>
           </td>
         </tr>

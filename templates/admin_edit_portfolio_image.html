@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Edit Portfolio Image - SnapHire Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Arial, sans-serif; display: flex; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+.sidebar { width: 260px; background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); padding: 25px 20px; position: sticky; top: 0; height: 100vh; }
+.sidebar h2 { color: #ff7f50; margin-bottom: 30px; }
+.sidebar a { display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.8); text-decoration: none; margin: 8px 0; padding: 12px 15px; border-radius: 12px; transition: 0.3s; }
+.sidebar a:hover { background: linear-gradient(135deg, #ff7f50, #ff6347); color: white; transform: translateX(5px); }
+.main { flex: 1; padding: 30px; overflow-y: auto; }
+.top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #ff7f50; padding-bottom: 15px; }
+.top-bar h1 { color: white; display: flex; align-items: center; gap: 10px; }
+.back-btn { background: rgba(255,255,255,0.15); color: white; padding: 8px 16px; border-radius: 25px; text-decoration: none; }
+.back-btn:hover { background: linear-gradient(135deg, #ff7f50, #ff6347); }
+.form-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 24px; padding: 30px; max-width: 700px; margin: 0 auto; }
+.form-group { margin-bottom: 20px; }
+.form-group label { display: flex; align-items: center; gap: 8px; font-weight: 600; color: #555; margin-bottom: 8px; }
+.form-group input, .form-group textarea { width: 100%; padding: 10px; border-radius: 12px; border: 2px solid #e0e0e0; font-size: 14px; transition: 0.3s; }
+.form-group input:focus, .form-group textarea:focus { outline: none; border-color: #ff7f50; }
+.button-group { display: flex; gap: 15px; margin-top: 30px; }
+.btn-save { background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; padding: 10px 25px; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; }
+.btn-cancel { background: linear-gradient(135deg, #95a5a6, #7f8c8d); color: white; padding: 10px 25px; border-radius: 30px; text-decoration: none; display: inline-block; }
+.btn-save:hover, .btn-cancel:hover { transform: translateY(-2px); }
+@media (max-width: 768px) { body { flex-direction: column; } .sidebar { width: 100%; height: auto; } .main { padding: 20px; } }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2><i class="fas fa-camera"></i> SnapHire Admin</h2>
+  <a href="/admin/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+  <a href="/admin/orders"><i class="fas fa-shopping-cart"></i> Orders</a>
+  <a href="/admin/packages"><i class="fas fa-camera"></i> Packages</a>
+  <a href="/admin/users"><i class="fas fa-users"></i> Users</a>
+  <a href="/admin/photographers"><i class="fas fa-camera-retro"></i> Photographers</a>
+  <a href="/admin/portfolio"><i class="fas fa-images"></i> Portfolio</a>
+  <a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+</div>
+
+<div class="main">
+  <div class="top-bar">
+    <h1><i class="fas fa-edit"></i> Edit Portfolio Image</h1>
+    <a href="/admin/portfolio/images/{{ image.photographer_id }}" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Images</a>
+  </div>
+
+  <div class="form-card">
+    <form method="POST">
+      <div class="form-group">
+        <label><i class="fas fa-link"></i> Image URL</label>
+        <input type="url" name="image_url" value="{{ image.image_url }}" required>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-map-marker-alt"></i> Location</label>
+        <input type="text" name="location" value="{{ image.location or '' }}">
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-calendar-alt"></i> Shoot Date</label>
+        <input type="date" name="shoot_date" value="{{ image.shoot_date or '' }}">
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-align-left"></i> Description</label>
+        <textarea name="description" rows="3">{{ image.description or '' }}</textarea>
+      </div>
+      <div class="button-group">
+        <button type="submit" class="btn-save"><i class="fas fa-save"></i> Save Changes</button>
+        <a href="/admin/portfolio/images/{{ image.photographer_id }}" class="btn-cancel"><i class="fas fa-times"></i> Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+</body>
+</html>

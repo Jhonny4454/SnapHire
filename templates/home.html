@@ -73,7 +73,7 @@ header {
   font-size: clamp(20px, 6vw, 28px);
 }
 
-/* ICON BUTTONS - Animations KEPT */
+/* ICON BUTTONS - Enhanced animations */
 .icon-button {
   background: white;
   border: none;
@@ -83,7 +83,7 @@ header {
   border-radius: 50%;
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
   margin-left: 8px;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .icon-button:hover {
@@ -181,30 +181,53 @@ header {
   padding: 0 10px;
 }
 
-/* BUTTON - Animations KEPT */
+/* BUTTON - Enhanced Professional Style */
 .btn {
   background: linear-gradient(135deg, #ff7f50, #ff6347);
-  padding: clamp(10px, 3vw, 14px) clamp(20px, 5vw, 30px);
+  padding: clamp(12px, 3.5vw, 16px) clamp(28px, 6vw, 40px);
   color: white;
-  border-radius: 30px;
+  border-radius: 50px;
   text-decoration: none;
-  font-weight: bold;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   border: none;
   cursor: pointer;
   box-shadow: 0 8px 20px rgba(255,127,80,0.35);
-  transition: all 0.3s ease;
-  font-size: clamp(13px, 4vw, 16px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: clamp(14px, 4vw, 18px);
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .btn:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 12px 30px rgba(255,127,80,0.5);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 15px 35px rgba(255,127,80,0.5);
 }
 
-.btn:active { transform: scale(0.98); }
+.btn:active {
+  transform: translateY(0) scale(0.98);
+}
 
 section {
   padding: clamp(40px, 8vw, 60px) clamp(15px, 5vw, 30px);
@@ -341,15 +364,16 @@ section {
   justify-content: center;
   margin-top: 15px;
   padding: clamp(8px, 2.5vw, 12px);
+  font-size: 14px;
 }
 
-/* NAVIGATION ARROWS - Animations KEPT */
+/* NAVIGATION ARROWS - Enhanced */
 .nav-arrow {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: clamp(35px, 8vw, 45px);
-  height: clamp(35px, 8vw, 45px);
+  width: clamp(40px, 8vw, 50px);
+  height: clamp(40px, 8vw, 50px);
   background: linear-gradient(135deg, #ff7f50, #ff6347);
   color: white;
   border: none;
@@ -358,15 +382,15 @@ section {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(16px, 4vw, 20px);
-  transition: all 0.3s ease;
+  font-size: clamp(18px, 4vw, 22px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 10;
   box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
 .nav-arrow:hover {
-  transform: translateY(-50%) scale(1.1);
-  box-shadow: 0 8px 25px rgba(255,127,80,0.4);
+  transform: translateY(-50%) scale(1.15);
+  box-shadow: 0 8px 25px rgba(255,127,80,0.5);
 }
 
 .nav-arrow:active {
@@ -374,11 +398,10 @@ section {
 }
 
 .nav-arrow.prev {
-  left: 0;
+  left: -10px;
 }
-
 .nav-arrow.next {
-  right: 0;
+  right: -10px;
 }
 
 /* REVIEWS SLIDER */
@@ -450,18 +473,23 @@ section {
   border-radius: 15px;
   overflow: hidden;
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .portfolio-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+  transform: translateY(-8px);
+  box-shadow: 0 20px 35px rgba(0,0,0,0.15);
 }
 
 .portfolio-card img {
   width: 100%;
   height: 250px;
   object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.portfolio-card:hover img {
+  transform: scale(1.03);
 }
 
 .portfolio-card-body {
@@ -505,21 +533,24 @@ section {
   padding: 50px;
 }
 
-/* Small button for "View more" inside portfolio card */
+/* Enhanced "View more" button inside portfolio card */
 .btn-sm {
   background: linear-gradient(135deg, #ff7f50, #ff6347);
-  padding: 6px 12px;
+  padding: 8px 16px;
   font-size: 0.8rem;
   display: inline-block;
-  margin-top: 10px;
-  border-radius: 20px;
+  margin-top: 12px;
+  border-radius: 30px;
   text-decoration: none;
   color: white;
   transition: all 0.3s ease;
+  font-weight: 500;
+  text-align: center;
 }
 .btn-sm:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(255,127,80,0.4);
+  box-shadow: 0 6px 12px rgba(255,127,80,0.4);
+  background: linear-gradient(135deg, #ff6347, #ff7f50);
 }
 
 /* TOAST NOTIFICATION - Animations KEPT */
@@ -530,7 +561,7 @@ section {
   background: linear-gradient(135deg, #28a745, #20c997);
   color: white;
   padding: clamp(12px, 3.5vw, 15px) clamp(18px, 5vw, 25px);
-  border-radius: 10px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -665,6 +696,8 @@ footer a:hover {
     height: 35px;
     font-size: 16px;
   }
+  .nav-arrow.prev { left: -5px; }
+  .nav-arrow.next { right: -5px; }
   
   .portfolio-grid {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -881,15 +914,16 @@ footer a:hover {
 <!-- ========== OUR BEST WORK SECTION ========== -->
 <section id="best-work">
   <h2 class="section-title">📸 Our Best Work</h2>
-  <p style="text-align: center; margin-bottom: 20px; color: #555;">Explore stunning captures from our talented photographers</p>
+  <p style="text-align: center; margin-bottom: 20px; color: #555; font-size: 1.1rem;">Explore stunning captures from our talented photographers</p>
   <div id="portfolio-grid" class="portfolio-grid">
     <div class="loading-spinner">
       <div class="spinner"></div>
     </div>
   </div>
-  <div class="text-center mt-4">
-    <a href="/portfolio" class="btn">
-      <i class="fas fa-images"></i> View Full Portfolio →
+  <div class="text-center mt-4" style="text-align: center; margin-top: 40px;">
+    <a href="/portfolio" class="btn" style="background: linear-gradient(135deg, #ff7f50, #ff6347); padding: 14px 35px; font-size: 1.1rem;">
+      <i class="fas fa-images"></i> View Full Portfolio
+      <i class="fas fa-arrow-right"></i>
     </a>
   </div>
 </section>
