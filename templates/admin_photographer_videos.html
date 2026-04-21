@@ -1,30 +1,73 @@
-{% extends "admin_base.html" %}
-{% block content %}
-<h1>Videos for {{ photographer.first_name }} {{ photographer.last_name }}</h1>
-<a href="/admin/photographer_videos/add/{{ photographer.id }}" class="btn btn-primary">Add Video</a>
-<a href="/admin/portfolio" class="btn btn-secondary">Back to Portfolio</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Videos for {{ photographer.first_name }} {{ photographer.last_name }} - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #f0f2f5; }
+        .sidebar { width: 260px; background: #2c3e50; color: white; height: 100vh; position: fixed; padding: 20px; }
+        .sidebar h2 { color: #e67e22; }
+        .sidebar a { display: block; color: #ecf0f1; text-decoration: none; padding: 10px; margin: 5px 0; border-radius: 8px; }
+        .sidebar a:hover { background: #e67e22; }
+        .main { margin-left: 260px; padding: 30px; }
+        .btn { display: inline-block; padding: 8px 16px; margin: 10px 5px; background: #3498db; color: white; text-decoration: none; border-radius: 5px; }
+        .btn-danger { background: #e74c3c; }
+        .btn-secondary { background: #95a5a6; }
+        table { width: 100%; background: white; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #e67e22; color: white; }
+        .flash { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .flash-success { background: #d4edda; color: #155724; }
+        .flash-error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+<div class="sidebar">
+    <h2><i class="fas fa-camera"></i> SnapHire Admin</h2>
+    <a href="/admin/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+    <a href="/admin/orders"><i class="fas fa-shopping-cart"></i> Orders</a>
+    <a href="/admin/packages"><i class="fas fa-camera"></i> Packages</a>
+    <a href="/admin/users"><i class="fas fa-users"></i> Users</a>
+    <a href="/admin/photographers"><i class="fas fa-camera-retro"></i> Photographers</a>
+    <a href="/admin/portfolio"><i class="fas fa-images"></i> Portfolio</a>
+    <a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+</div>
+<div class="main">
+    <h1>Videos for {{ photographer.first_name }} {{ photographer.last_name }}</h1>
+    <a href="/admin/photographer_videos/add/{{ photographer.id }}" class="btn"><i class="fas fa-plus"></i> Add Video</a>
+    <a href="/admin/portfolio" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Portfolio</a>
 
-<table class="table table-striped">
-  <thead>
-    <tr><th>ID</th><th>Title</th><th>Short Loop</th><th>Sort Order</th><th>Formats</th><th>Actions</th></tr>
-  </thead>
-  <tbody>
-    {% for v in videos %}
-    <tr>
-      <td>{{ v.id }}</td><td>{{ v.title }}</td>
-      <td>{{ 'Yes' if v.is_short_loop else 'No' }}</td>
-      <td>{{ v.sort_order }}</td>
-      <td>{{ v.formats or '—' }}</td>
-      <td>
-        <a href="/admin/videos/edit/{{ v.id }}">Edit</a>
-        <form method="POST" action="/admin/videos/delete/{{ v.id }}" style="display:inline;" onsubmit="return confirm('Delete video?')">
-          <button type="submit">Delete</button>
-        </form>
-      </td>
-    </tr>
-    {% else %}
-    <tr><td colspan="6">No videos for this photographer.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% endblock %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <table>
+        <thead>
+            <tr><th>ID</th><th>Title</th><th>Short Loop</th><th>Sort Order</th><th>Formats</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+            {% for v in videos %}
+            <tr>
+                <td>{{ v.id }}</td>
+                <td>{{ v.title }}</td>
+                <td>{{ 'Yes' if v.is_short_loop else 'No' }}</td>
+                <td>{{ v.sort_order }}</td>
+                <td>{{ v.formats or '—' }}</td>
+                <td>
+                    <a href="/admin/videos/edit/{{ v.id }}" class="btn" style="background:#f39c12;">Edit</a>
+                    <form method="POST" action="/admin/videos/delete/{{ v.id }}" style="display:inline;" onsubmit="return confirm('Delete this video?')">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">No videos for this photographer.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
