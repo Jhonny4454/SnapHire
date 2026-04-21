@@ -405,7 +405,7 @@ body::before {
     Add Portfolio Image
   </h1>
   <div class="action-links">
-    <!-- NEW: Manage Videos button -->
+    <!-- Manage Videos button -->
     <a href="/admin/photographer_videos/{{ photographer.id }}" class="manage-videos-btn">
       <i class="fas fa-video"></i> Manage Videos
     </a>
@@ -431,7 +431,8 @@ body::before {
     <i class="fas fa-camera-retro"></i>
     Add Image for {{ photographer.first_name }} {{ photographer.last_name }}
   </h2>
-  <form method="POST">
+  <!-- Explicit action: POST to the same URL -->
+  <form method="POST" action="/admin/portfolio/add/{{ photographer.id }}">
     <div class="form-group">
       <label><i class="fas fa-link"></i> Image URL *</label>
       <input type="url" name="image_url" required placeholder="https://example.com/photo.jpg">
