@@ -134,7 +134,13 @@ body::before {
   color: #ff7f50;
 }
 
-.back-btn {
+.action-links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.back-btn, .manage-videos-btn {
   background: rgba(255,255,255,0.15);
   color: white;
   padding: 8px 16px;
@@ -147,7 +153,7 @@ body::before {
   font-size: clamp(12px, 3.5vw, 14px);
 }
 
-.back-btn:hover {
+.back-btn:hover, .manage-videos-btn:hover {
   background: linear-gradient(135deg, #ff7f50, #ff6347);
   transform: translateY(-2px);
 }
@@ -372,7 +378,7 @@ body::before {
 
 /* PRINT STYLES */
 @media print {
-  body::before, .particle, .sidebar, .button-group, .back-btn {
+  body::before, .particle, .sidebar, .button-group, .action-links {
     display: none;
   }
   
@@ -417,7 +423,6 @@ body::before {
   <a href="/admin/photographers">
     <i class="fas fa-camera-retro"></i> Photographers
   </a>
-  <!-- NEW PORTFOLIO LINK -->
   <a href="/admin/portfolio">
     <i class="fas fa-images"></i> Portfolio
   </a>
@@ -434,9 +439,14 @@ body::before {
     <i class="fas fa-edit"></i>
     Edit Photographer
   </h1>
-  <a href="/admin/photographers" class="back-btn">
-    <i class="fas fa-arrow-left"></i> Back to Photographers
-  </a>
+  <div class="action-links">
+    <a href="/admin/photographer_videos/{{ photographer.id }}" class="manage-videos-btn">
+      <i class="fas fa-video"></i> Manage Videos
+    </a>
+    <a href="/admin/photographers" class="back-btn">
+      <i class="fas fa-arrow-left"></i> Back to Photographers
+    </a>
+  </div>
 </div>
 
 <!-- FLASH MESSAGES -->
@@ -481,7 +491,7 @@ body::before {
       <input type="text" name="experience" value="{{ photographer.experience }}" placeholder="e.g., 5 years in wedding photography">
     </div>
     
-    <!-- NEW: Profile Image URL field -->
+    <!-- Profile Image URL field -->
     <div class="form-group">
       <label><i class="fas fa-image"></i> Profile Image URL</label>
       <input type="url" name="profile_image" value="{{ photographer.profile_image }}" placeholder="https://example.com/profile.jpg">

@@ -25,7 +25,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Animated background overlay */
 body::before {
   content: "";
   position: absolute;
@@ -37,7 +36,6 @@ body::before {
   pointer-events: none;
 }
 
-/* Floating particles */
 .particle {
   position: absolute;
   background: rgba(255,255,255,0.15);
@@ -51,7 +49,6 @@ body::before {
   50% { transform: translateY(-50px) translateX(30px); opacity: 0.5; }
 }
 
-/* SIDEBAR - Responsive */
 .sidebar {
   width: 260px;
   background: rgba(0,0,0,0.4);
@@ -102,7 +99,6 @@ body::before {
   transform: translateX(5px);
 }
 
-/* MAIN - Responsive */
 .main {
   flex: 1;
   padding: clamp(20px, 5vw, 30px) clamp(20px, 5vw, 30px);
@@ -110,7 +106,6 @@ body::before {
   height: 100vh;
 }
 
-/* TOP BAR - Responsive */
 .top-bar {
   display: flex;
   justify-content: space-between;
@@ -152,7 +147,6 @@ body::before {
   transform: translateY(-2px);
 }
 
-/* FLASH MESSAGES */
 .flash {
   padding: 15px 20px;
   border-radius: 12px;
@@ -190,7 +184,6 @@ body::before {
   font-size: 20px;
 }
 
-/* TABLE - Responsive */
 .table-wrapper {
   overflow-x: auto;
   background: rgba(255,255,255,0.95);
@@ -202,7 +195,7 @@ body::before {
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 400px;
+  min-width: 600px;
 }
 
 th, td {
@@ -226,8 +219,7 @@ tr:hover {
   transition: 0.2s;
 }
 
-/* IMAGE COUNT BADGE */
-.image-count {
+.count-badge {
   display: inline-block;
   background: linear-gradient(135deg, #3498db, #2980b9);
   color: white;
@@ -237,7 +229,10 @@ tr:hover {
   font-weight: bold;
 }
 
-/* BUTTONS */
+.count-badge.video {
+  background: linear-gradient(135deg, #e67e22, #d35400);
+}
+
 .btn-manage {
   background: linear-gradient(135deg, #3498db, #2980b9);
   color: white;
@@ -258,7 +253,20 @@ tr:hover {
   box-shadow: 0 5px 15px rgba(52,152,219,0.4);
 }
 
-/* NO DATA */
+.btn-manage.video {
+  background: linear-gradient(135deg, #e67e22, #d35400);
+}
+
+.btn-manage.video:hover {
+  box-shadow: 0 5px 15px rgba(230,126,34,0.4);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .no-data {
   text-align: center;
   padding: 60px 20px;
@@ -271,7 +279,6 @@ tr:hover {
   color: #ddd;
 }
 
-/* RESPONSIVE */
 @media (max-width: 768px) {
   body {
     flex-direction: column;
@@ -306,6 +313,15 @@ tr:hover {
   th, td {
     padding: 10px;
   }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .btn-manage {
+    justify-content: center;
+  }
 }
 
 @media (max-width: 480px) {
@@ -317,18 +333,8 @@ tr:hover {
   .sidebar h2 {
     text-align: center;
   }
-  
-  .btn-manage {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  td:last-child {
-    text-align: center;
-  }
 }
 
-/* LANDSCAPE MODE */
 @media (max-width: 768px) and (orientation: landscape) {
   .sidebar {
     padding: 10px;
@@ -339,7 +345,6 @@ tr:hover {
   }
 }
 
-/* PRINT STYLES */
 @media print {
   body::before, .particle, .sidebar, .refresh-btn, .btn-manage {
     display: none;
@@ -367,7 +372,6 @@ tr:hover {
 
 <body>
 
-<!-- SIDEBAR -->
 <div class="sidebar">
   <h2>
     <i class="fas fa-camera"></i>
@@ -396,20 +400,18 @@ tr:hover {
   </a>
 </div>
 
-<!-- MAIN -->
 <div class="main">
 
 <div class="top-bar">
   <h1>
     <i class="fas fa-images"></i>
-    Portfolio Management
+    Portfolio & Video Management
   </h1>
   <a href="/admin/portfolio" class="refresh-btn">
     <i class="fas fa-sync-alt"></i> Refresh
   </a>
 </div>
 
-<!-- FLASH MESSAGES -->
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     {% for category, message in messages %}
@@ -421,13 +423,13 @@ tr:hover {
   {% endif %}
 {% endwith %}
 
-<!-- PHOTOGRAPHERS TABLE -->
 <div class="table-wrapper">
   <table>
     <thead>
       <tr>
         <th>Photographer</th>
-        <th>Images Count</th>
+        <th>Images</th>
+        <th>Videos</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -438,21 +440,31 @@ tr:hover {
           <td>
             <strong>{{ p.first_name }} {{ p.last_name }}</strong>
           </td>
-          <td>
-            <span class="image-count">
+          <td class="text-center">
+            <span class="count-badge">
               <i class="fas fa-image"></i> {{ p.image_count or 0 }}
             </span>
           </td>
+          <td class="text-center">
+            <span class="count-badge video">
+              <i class="fas fa-video"></i> {{ p.video_count or 0 }}
+            </span>
+          </td>
           <td>
-            <a href="/admin/portfolio/images/{{ p.id }}" class="btn-manage">
-              <i class="fas fa-images"></i> Manage Images
-            </a>
+            <div class="action-buttons">
+              <a href="/admin/portfolio/images/{{ p.id }}" class="btn-manage">
+                <i class="fas fa-images"></i> Manage Images
+              </a>
+              <a href="/admin/photographer_videos/{{ p.id }}" class="btn-manage video">
+                <i class="fas fa-video"></i> Manage Videos
+              </a>
+            </div>
           </td>
         </tr>
         {% endfor %}
       {% else %}
         <tr>
-          <td colspan="3" class="no-data">
+          <td colspan="4" class="no-data">
             <i class="fas fa-camera-retro"></i>
             <p>No photographers found. Please add photographers first.</p>
           </td>
@@ -465,7 +477,6 @@ tr:hover {
 </div>
 
 <script>
-// Create floating particles
 function createParticles() {
   for (let i = 0; i < 30; i++) {
     const particle = document.createElement('div');
@@ -480,19 +491,15 @@ function createParticles() {
     document.body.appendChild(particle);
   }
 }
-
 createParticles();
 
-// Auto-hide flash messages after 3 seconds
 setTimeout(function() {
   const flashes = document.querySelectorAll('.flash');
   flashes.forEach(flash => {
     flash.style.transition = 'opacity 0.5s ease';
     flash.style.opacity = '0';
     setTimeout(() => {
-      if (flash.parentNode) {
-        flash.parentNode.removeChild(flash);
-      }
+      if (flash.parentNode) flash.parentNode.removeChild(flash);
     }, 500);
   });
 }, 3000);

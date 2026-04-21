@@ -514,6 +514,72 @@ section {
   color: #ff7f50;
 }
 
+/* Video Grid Styles */
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 25px;
+  margin-top: 30px;
+}
+
+.video-card {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.video-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 35px rgba(0,0,0,0.15);
+}
+
+.video-card video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #000;
+}
+
+.video-card-body {
+  padding: 15px;
+}
+
+.video-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.video-meta {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.video-meta i {
+  width: 16px;
+  color: #ff7f50;
+}
+
+.short-loop-badge {
+  background: #ff7f50;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* Simple spinner (no Bootstrap) */
 .spinner {
   display: inline-block;
@@ -699,7 +765,7 @@ footer a:hover {
   .nav-arrow.prev { left: -5px; }
   .nav-arrow.next { right: -5px; }
   
-  .portfolio-grid {
+  .portfolio-grid, .video-grid {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
   }
@@ -731,11 +797,11 @@ footer a:hover {
     min-width: 180px;
   }
   
-  .portfolio-grid {
+  .portfolio-grid, .video-grid {
     grid-template-columns: 1fr;
   }
   
-  .portfolio-card img {
+  .portfolio-card img, .video-card video {
     height: 200px;
   }
 }
@@ -911,7 +977,7 @@ footer a:hover {
   </div>
 </section>
 
-<!-- ========== OUR BEST WORK SECTION ========== -->
+<!-- ========== OUR BEST WORK (IMAGES) ========== -->
 <section id="best-work">
   <h2 class="section-title">📸 Our Best Work</h2>
   <p style="text-align: center; margin-bottom: 20px; color: #555; font-size: 1.1rem;">Explore stunning captures from our talented photographers</p>
@@ -927,7 +993,24 @@ footer a:hover {
     </a>
   </div>
 </section>
-<!-- ========== END BEST WORK SECTION ========== -->
+
+<!-- ========== NEW: FEATURED VIDEOS SECTION ========== -->
+<section id="featured-videos">
+  <h2 class="section-title">🎬 Featured Videos</h2>
+  <p style="text-align: center; margin-bottom: 20px; color: #555; font-size: 1.1rem;">Short cinematic moments captured by our photographers</p>
+  <div id="video-grid" class="video-grid">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+    </div>
+  </div>
+  <div class="text-center mt-4" style="text-align: center; margin-top: 40px;">
+    <a href="/portfolio" class="btn" style="background: linear-gradient(135deg, #ff7f50, #ff6347); padding: 14px 35px; font-size: 1.1rem;">
+      <i class="fas fa-video"></i> View All Videos
+      <i class="fas fa-arrow-right"></i>
+    </a>
+  </div>
+</section>
+<!-- ========== END VIDEOS SECTION ========== -->
 
 <!-- Footer -->
 <footer>
@@ -1023,6 +1106,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // Load Portfolio (Best Work)
   fetchPortfolio();
+  // Load Videos
+  fetchVideos();
 });
 
 // Package slider function
@@ -1129,6 +1214,61 @@ async function fetchPortfolio() {
     console.error('Portfolio load error:', error);
     grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#d9534f;">Failed to load portfolio. Please try again later.</div>';
   }
+}
+
+// NEW: Fetch videos and render grid
+async function fetchVideos() {
+  const grid = document.getElementById('video-grid');
+  try {
+    const response = await fetch('/api/videos');
+    const videos = await response.json();
+    
+    if (!videos || videos.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1; text-align:center;"><p>No videos available yet. Check back soon!</p></div>';
+      return;
+    }
+    
+    grid.innerHTML = '';
+    for (const video of videos) {
+      // Determine video attributes based on short loop flag
+      const isShortLoop = video.is_short_loop === 1 || video.is_short_loop === true;
+      const autoplayAttr = isShortLoop ? 'autoplay loop muted playsinline' : 'controls';
+      const posterAttr = video.poster_image_url ? `poster="${video.poster_image_url}"` : '';
+      
+      const card = document.createElement('div');
+      card.className = 'video-card';
+      card.innerHTML = `
+        <video ${posterAttr} ${autoplayAttr} preload="metadata">
+          <source src="${video.video_url}" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+        <div class="video-card-body">
+          <div class="video-title">${escapeHtml(video.title)}</div>
+          <div class="video-meta">
+            <span><i class="fas fa-user"></i> ${escapeHtml(video.photographer_name)}</span>
+            <span><i class="fas fa-clock"></i> ${video.duration_seconds ? video.duration_seconds + ' sec' : 'Short clip'}</span>
+            ${isShortLoop ? '<span class="short-loop-badge"><i class="fas fa-sync-alt"></i> Short Loop</span>' : ''}
+          </div>
+          ${video.description ? `<p style="margin-top: 8px; font-size: 0.9rem; color: #555;">${escapeHtml(video.description.substring(0, 100))}</p>` : ''}
+        </div>
+      `;
+      grid.appendChild(card);
+    }
+  } catch (error) {
+    console.error('Video load error:', error);
+    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#d9534f;">Failed to load videos. Please try again later.</div>';
+  }
+}
+
+// Helper: escape HTML to prevent XSS
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
 }
 
 // Toast notification function
