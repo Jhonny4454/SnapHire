@@ -51,7 +51,7 @@ body::before {
   50% { transform: translateY(-50px) translateX(30px); opacity: 0.5; }
 }
 
-/* SIDEBAR - Responsive */
+/* SIDEBAR - Glassmorphism with smooth transitions */
 .sidebar {
   width: 260px;
   background: rgba(0,0,0,0.4);
@@ -62,7 +62,7 @@ body::before {
   position: sticky;
   top: 0;
   border-right: 1px solid rgba(255,255,255,0.1);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar h2 {
@@ -87,7 +87,7 @@ body::before {
   margin: 8px 0;
   padding: 12px 15px;
   border-radius: 12px;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: clamp(13px, 3.5vw, 14px);
 }
 
@@ -143,19 +143,25 @@ body::before {
 .back-btn, .manage-videos-btn {
   background: rgba(255,255,255,0.15);
   color: white;
-  padding: 8px 16px;
-  border-radius: 25px;
+  padding: 8px 18px;
+  border-radius: 30px;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: clamp(12px, 3.5vw, 14px);
+  font-weight: 500;
 }
 
 .back-btn:hover, .manage-videos-btn:hover {
   background: linear-gradient(135deg, #ff7f50, #ff6347);
   transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255,127,80,0.4);
+}
+
+.back-btn:active, .manage-videos-btn:active {
+  transform: translateY(0);
 }
 
 /* FORM CARD - Glass Morphism */
@@ -205,13 +211,20 @@ body::before {
   box-shadow: 0 0 0 3px rgba(255,127,80,0.1);
 }
 
+.form-group small {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: #888;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 15px;
 }
 
-/* BUTTONS - Responsive */
+/* BUTTONS - Responsive with smooth animations */
 .button-group {
   display: flex;
   gap: 15px;
@@ -231,12 +244,16 @@ body::before {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-save:hover {
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(46,204,113,0.4);
+}
+
+.btn-save:active {
+  transform: translateY(0);
 }
 
 .btn-cancel {
@@ -252,12 +269,16 @@ body::before {
   align-items: center;
   gap: 8px;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-cancel:hover {
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(149,165,166,0.4);
+}
+
+.btn-cancel:active {
+  transform: translateY(0);
 }
 
 /* FLASH MESSAGES */
@@ -270,6 +291,7 @@ body::before {
   gap: 10px;
   animation: slideDown 0.5s ease;
   background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(5px);
   font-size: clamp(13px, 3.5vw, 14px);
 }
 
@@ -426,7 +448,6 @@ body::before {
   <a href="/admin/portfolio">
     <i class="fas fa-images"></i> Portfolio
   </a>
-  <!-- NEW: Videos link -->
   <a href="/admin/videos">
     <i class="fas fa-video"></i> Videos
   </a>
@@ -499,7 +520,7 @@ body::before {
     <div class="form-group">
       <label><i class="fas fa-image"></i> Profile Image URL</label>
       <input type="url" name="profile_image" value="{{ photographer.profile_image }}" placeholder="https://example.com/profile.jpg">
-      <small style="color: #999; font-size: 12px;">Direct image URL for photographer's avatar (shown in portfolio).</small>
+      <small>Direct image URL for photographer's avatar (shown in portfolio).</small>
     </div>
     
     <div class="form-row">

@@ -8,7 +8,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 
 <style>
-/* (Your existing CSS – unchanged) */
 * {
   margin: 0;
   padding: 0;
@@ -60,7 +59,7 @@ body::before {
   position: sticky;
   top: 0;
   border-right: 1px solid rgba(255,255,255,0.1);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar h2 {
@@ -85,7 +84,7 @@ body::before {
   margin: 8px 0;
   padding: 12px 15px;
   border-radius: 12px;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: clamp(13px, 3.5vw, 14px);
 }
 
@@ -151,7 +150,7 @@ body::before {
 
 .search-box input {
   padding: 10px 12px 10px 35px;
-  border-radius: 25px;
+  border-radius: 30px;
   border: 1px solid #ddd;
   width: 250px;
   font-size: 14px;
@@ -170,18 +169,25 @@ body::before {
   background: linear-gradient(135deg, #3498db, #2980b9);
   color: white;
   padding: 10px 18px;
-  border-radius: 25px;
+  border-radius: 30px;
   text-decoration: none;
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: clamp(12px, 3.5vw, 14px);
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
 }
 
 .refresh-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(52,152,219,0.4);
+}
+
+.refresh-btn:active {
+  transform: translateY(0);
 }
 
 .stats-cards {
@@ -198,7 +204,7 @@ body::before {
   border-radius: 16px;
   text-align: center;
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .stat-card:hover {
@@ -239,18 +245,13 @@ body::before {
   gap: 10px;
   animation: slideDown 0.5s ease;
   background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(5px);
   font-size: clamp(13px, 3.5vw, 14px);
 }
 
 @keyframes slideDown {
-  from {
-    transform: translateY(-20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .flash-success {
@@ -356,13 +357,16 @@ tr:hover {
 
 .edit-btn, .portfolio-btn, .videos-btn {
   padding: 6px 12px;
-  border-radius: 20px;
+  border-radius: 30px;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 5px;
   font-size: clamp(11px, 3vw, 12px);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
 }
 
 .edit-btn {
@@ -370,9 +374,13 @@ tr:hover {
   color: white;
 }
 
-.edit-btn:hover {
+.edit-btn:hover, .portfolio-btn:hover, .videos-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 3px 10px rgba(52,152,219,0.4);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+}
+
+.edit-btn:active, .portfolio-btn:active, .videos-btn:active {
+  transform: translateY(0);
 }
 
 .portfolio-btn {
@@ -380,38 +388,33 @@ tr:hover {
   color: white;
 }
 
-.portfolio-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 3px 10px rgba(155,89,182,0.4);
-}
-
 .videos-btn {
   background: linear-gradient(135deg, #e67e22, #d35400);
   color: white;
-}
-
-.videos-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 3px 10px rgba(230,126,34,0.4);
 }
 
 .delete-btn {
   background: linear-gradient(135deg, #e74c3c, #c0392b);
   color: white;
   padding: 6px 12px;
-  border-radius: 20px;
+  border-radius: 30px;
   border: none;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 5px;
   font-size: clamp(11px, 3vw, 12px);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
 }
 
 .delete-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 3px 10px rgba(231,76,60,0.4);
+}
+
+.delete-btn:active {
+  transform: translateY(0);
 }
 
 .no-data {
@@ -606,7 +609,6 @@ createParticles();
   <a href="/admin/portfolio">
     <i class="fas fa-images"></i> Portfolio
   </a>
-  <!-- NEW: Videos link -->
   <a href="/admin/videos">
     <i class="fas fa-video"></i> Videos
   </a>
@@ -746,7 +748,6 @@ createParticles();
             <a href="/admin/portfolio" class="portfolio-btn">
               <i class="fas fa-images"></i> Portfolio
             </a>
-            <!-- Videos button (per photographer) -->
             <a href="/admin/photographer_videos/{{ p.id }}" class="videos-btn">
               <i class="fas fa-video"></i> Videos
             </a>
