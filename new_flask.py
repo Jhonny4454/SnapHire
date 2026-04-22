@@ -610,6 +610,13 @@ def admin_edit_video(video_id):
     cursor = db.cursor(dictionary=True)
     
     if request.method == "POST":
+        print("=" * 50)
+        print("EDIT VIDEO POST REQUEST RECEIVED")
+        print(f"Video ID: {video_id}")
+        print(f"Form data: {dict(request.form)}")
+        print(f"Files: {request.files}")
+        print(f"Video file in request: {'video_file' in request.files}")
+        
         title = request.form.get("title")
         description = request.form.get("description")
         duration_seconds = request.form.get("duration_seconds") or None
@@ -623,18 +630,26 @@ def admin_edit_video(video_id):
                     is_short_loop=%s, sort_order=%s, updated_at=NOW()
                 WHERE id=%s
             """, (title, description, duration_seconds, is_short_loop, sort_order, video_id))
+            print("✅ Metadata updated")
             
             # Check if a new video file was uploaded
             if 'video_file' in request.files:
                 video_file = request.files['video_file']
-                if video_file and allowed_video_file(video_file.filename):
+                print(f"Video file present: {video_file.filename if video_file else 'None'}")
+                
+                if video_file and video_file.filename != '' and allowed_video_file(video_file.filename):
+                    print(f"✅ Video file valid: {video_file.filename}")
+                    
                     # Get existing video files to delete
                     cursor.execute("SELECT file_url FROM video_files WHERE video_id = %s", (video_id,))
                     existing_files = cursor.fetchall()
+                    print(f"Existing files to delete: {len(existing_files)}")
+                    
                     for file_row in existing_files:
                         file_path = file_row['file_url'].lstrip('/')
                         if os.path.exists(file_path):
                             os.remove(file_path)
+                            print(f"Deleted: {file_path}")
                     
                     # Delete existing video_files records
                     cursor.execute("DELETE FROM video_files WHERE video_id = %s", (video_id,))
@@ -646,19 +661,25 @@ def admin_edit_video(video_id):
                     video_file.save(filepath)
                     file_url = f"/static/uploads/videos/{filename}"
                     file_size = os.path.getsize(filepath)
+                    print(f"✅ New file saved: {filepath}")
                     
                     # Insert new video file record
                     cursor.execute("""
                         INSERT INTO video_files (video_id, format, file_url, file_size_bytes, is_default)
                         VALUES (%s, %s, %s, %s, %s)
                     """, (video_id, ext, file_url, file_size, True))
+                    print("✅ New video file record inserted")
+                else:
+                    print(f"❌ Invalid video file: {video_file.filename if video_file else 'None'}")
+            else:
+                print("❌ No 'video_file' in request.files")
             
             db.commit()
             flash("✅ Video updated successfully!", "success")
             return redirect("/admin/videos")
             
         except Exception as e:
-            print("Edit Video Error:", e)
+            print(f"❌ Edit Video Error: {e}")
             db.rollback()
             flash(f"❌ Error updating video: {str(e)}", "error")
         finally:
@@ -677,7 +698,7 @@ def admin_edit_video(video_id):
         cursor.execute("SELECT id, first_name, last_name FROM photographers ORDER BY first_name")
         photographers = cursor.fetchall()
     except Exception as e:
-        print("Fetch Video Error:", e)
+        print(f"Fetch Video Error: {e}")
         video = None
         photographers = []
     finally:
