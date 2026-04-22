@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Admin Panel | Edit Video Details</title>
+  <!-- Font Awesome 6 (free icons) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Google Fonts: Inter modern sans -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #f1f5f9;
+      font-family: 'Inter', sans-serif;
+      padding: 2rem 1.5rem;
+      color: #0f172a;
+    }
+
+    /* main container */
+    .admin-container {
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    /* header area */
+    .admin-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 1rem;
+    }
+    .title-section h1 {
+      font-size: 1.9rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #1e293b, #3b82f6);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: -0.3px;
+    }
+    .title-section p {
+      color: #475569;
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+    .badge-admin {
+      background: #0f172a;
+      color: white;
+      padding: 0.4rem 1rem;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    /* two column layout */
+    .edit-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 2rem;
+    }
+
+    /* cards */
+    .card {
+      background: white;
+      border-radius: 28px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.02);
+      overflow: hidden;
+      transition: all 0.2s ease;
+      border: 1px solid #eef2ff;
+    }
+
+    .card-header {
+      padding: 1.2rem 1.8rem;
+      background: #fafcff;
+      border-bottom: 1px solid #e9edf2;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 1.2rem;
+    }
+    .card-header i {
+      color: #3b82f6;
+      font-size: 1.3rem;
+    }
+    .card-body {
+      padding: 1.8rem;
+    }
+
+    /* form groups */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #1e293b;
+      font-size: 0.85rem;
+      letter-spacing: 0.3px;
+    }
+    label i {
+      color: #3b82f6;
+      width: 18px;
+      font-size: 0.9rem;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 18px;
+      font-family: 'Inter', monospace;
+      font-size: 0.95rem;
+      transition: 0.2s;
+      background: #ffffff;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    /* thumbnail preview */
+    .thumbnail-preview-area {
+      background: #f8fafc;
+      border-radius: 24px;
+      padding: 1rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      border: 1px dashed #cbd5e1;
+    }
+    .thumb-img {
+      max-width: 100%;
+      max-height: 160px;
+      border-radius: 20px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+      object-fit: cover;
+      background: #eef2ff;
+    }
+    .thumb-placeholder {
+      background: #eef2ff;
+      border-radius: 20px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #475569;
+      gap: 10px;
+    }
+
+    /* status & visibility */
+    .toggle-group {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+    .toggle-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f1f5f9;
+      padding: 0.5rem 1rem;
+      border-radius: 60px;
+      cursor: pointer;
+      transition: 0.1s;
+      border: 1px solid transparent;
+    }
+    .toggle-option.active {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+    .toggle-option.active i {
+      color: white;
+    }
+    .toggle-option input {
+      width: auto;
+      margin: 0;
+      accent-color: #3b82f6;
+      transform: scale(1.1);
+    }
+
+    /* action buttons */
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 2rem;
+      justify-content: flex-end;
+    }
+    .btn {
+      padding: 0.8rem 1.6rem;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+      box-shadow: 0 2px 6px rgba(59,130,246,0.3);
+    }
+    .btn-primary:hover {
+      background: #2563eb;
+      transform: translateY(-2px);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid #cbd5e1;
+      color: #334155;
+    }
+    .btn-outline:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+    .btn-danger {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+    .btn-danger:hover {
+      background: #fecaca;
+    }
+
+    /* meta table */
+    .meta-preview {
+      background: #f8fafc;
+      border-radius: 20px;
+      padding: 1.2rem;
+      margin-top: 1rem;
+    }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 0.85rem;
+    }
+    .meta-label {
+      font-weight: 600;
+      color: #334155;
+    }
+    .meta-value {
+      color: #0f172a;
+      font-family: monospace;
+      word-break: break-word;
+      text-align: right;
+      max-width: 60%;
+    }
+
+    /* status toast */
+    .toast-message {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      background: #1e293b;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 60px;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 1000;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: 0.2s;
+      pointer-events: none;
+    }
+    .toast-message.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 860px) {
+      .edit-layout {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      body {
+        padding: 1rem;
+      }
+    }
+    hr {
+      margin: 1rem 0;
+      border-color: #eef2ff;
+    }
+  </style>
+</head>
+<body>
+<div class="admin-container">
+  <div class="admin-header">
+    <div class="title-section">
+      <h1><i class="fas fa-video me-2"></i> Video Content Editor</h1>
+      <p>Admin dashboard — manage metadata, visibility, and video assets</p>
+    </div>
+    <div class="badge-admin">
+      <i class="fas fa-shield-alt"></i> Admin access · edit mode
+    </div>
+  </div>
+
+  <div class="edit-layout">
+    <!-- LEFT COLUMN: Video details form -->
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-pen-fancy"></i> 
+        <span>Edit video details</span>
+      </div>
+      <div class="card-body">
+        <form id="videoEditForm">
+          <div class="form-group">
+            <label><i class="fas fa-heading"></i> Video Title *</label>
+            <input type="text" id="videoTitle" placeholder="e.g., 'Behind the Scenes: Making of Future Tech'" value="Mastering Web3 & AI Synergy">
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-align-left"></i> Description</label>
+            <textarea id="videoDesc" placeholder="Write a compelling description for the video...">Explore the fusion of AI and decentralized web in this exclusive interview with industry leaders. Learn about cutting-edge innovations and practical use cases.</textarea>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-link"></i> Video URL (YouTube / Vimeo / Direct)</label>
+            <input type="url" id="videoUrl" placeholder="https://www.youtube.com/watch?v=..." value="https://www.youtube.com/embed/dQw4w9WgXcQ">
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-image"></i> Thumbnail URL</label>
+            <input type="url" id="thumbUrl" placeholder="https://example.com/thumbnail.jpg" value="https://picsum.photos/id/1015/640/360">
+          </div>
+          <div class="thumbnail-preview-area" id="thumbPreviewArea">
+            <!-- dynamic thumbnail preview -->
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-tags"></i> Category</label>
+            <select id="videoCategory">
+              <option value="technology">Technology</option>
+              <option value="education" selected>Education</option>
+              <option value="entertainment">Entertainment</option>
+              <option value="lifestyle">Lifestyle</option>
+              <option value="gaming">Gaming</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-calendar-alt"></i> Published Date</label>
+            <input type="date" id="publishDate" value="2025-02-15">
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-globe"></i> Visibility & Status</label>
+            <div class="toggle-group" id="visibilityGroup">
+              <label class="toggle-option" data-value="public">
+                <input type="radio" name="visibility" value="public" checked> <i class="fas fa-eye"></i> Public
+              </label>
+              <label class="toggle-option" data-value="unlisted">
+                <input type="radio" name="visibility" value="unlisted"> <i class="fas fa-link"></i> Unlisted
+              </label>
+              <label class="toggle-option" data-value="private">
+                <input type="radio" name="visibility" value="private"> <i class="fas fa-lock"></i> Private
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-toggle-on"></i> Active / Disable video</label>
+            <div class="toggle-group">
+              <label class="toggle-option" data-active="true">
+                <input type="radio" name="activeStatus" value="active" checked> <i class="fas fa-check-circle"></i> Active
+              </label>
+              <label class="toggle-option" data-active="false">
+                <input type="radio" name="activeStatus" value="disabled"> <i class="fas fa-ban"></i> Disabled
+              </label>
+            </div>
+          </div>
+          <div class="action-buttons">
+            <button type="button" class="btn btn-outline" id="resetBtn"><i class="fas fa-undo-alt"></i> Reset changes</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Preview & additional admin meta -->
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-chalkboard-user"></i>
+        <span>Live preview & metadata</span>
+      </div>
+      <div class="card-body">
+        <div style="background: #0f172a; border-radius: 24px; overflow: hidden; margin-bottom: 1.5rem;">
+          <div style="position: relative; background: #000; display: flex; justify-content: center;">
+            <img id="previewThumbnail" src="https://picsum.photos/id/1015/640/360" alt="video thumbnail preview" style="width:100%; max-height: 200px; object-fit: cover; display: block;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.6); border-radius: 60px; padding: 8px 16px; color: white; font-size: 0.8rem; backdrop-filter: blur(4px);"><i class="fas fa-play"></i> Preview mode</div>
+          </div>
+        </div>
+        <div class="meta-preview">
+          <div class="meta-row"><span class="meta-label"><i class="fas fa-heading"></i> Title:</span><span class="meta-value" id="previewTitle">Mastering Web3 & AI Synergy</span></div>
+          <div class="meta-row"><span class="meta-label"><i class="fas fa-align-left"></i> Description:</span><span class="meta-value" id="previewDesc">Explore the fusion of AI and decentralized web...</span></div>
+          <div class="meta-row"><span class="meta-label"><i class="fas fa-link"></i> Video URL:</span><span class="meta-value" id="previewUrl">https://www.youtube.com/embed/dQw4w9WgXcQ</span></div>
+          <div class="meta-row"><span class="meta-label"><i class="fas fa-tag"></i> Category:</span><span class="meta-value" id="previewCategory">Education</span></div>
+          <div class="meta-row"><span class="meta-label"><i class="fas fa-eye"></i> Visibility:</span><span class="meta-value" id="previewVisibility">Public</span></div>
+          <div class="meta-row"><span class="meta-label"><i class="fas fa-power-off"></i> Status:</span><span class="meta-value" id="previewStatus">Active</span></div>
+          <div class="meta-row"><span class="meta-label"><i class="fas fa-calendar-week"></i> Published:</span><span class="meta-value" id="previewDate">2025-02-15</span></div>
+        </div>
+        <hr>
+        <div style="font-size: 0.8rem; background: #f1f5f9; padding: 12px; border-radius: 20px; color: #334155;">
+          <i class="fas fa-info-circle"></i> Admin note: Changes are applied locally. In a real backend, this would sync with database. Use "Save changes" to persist modifications.
+        </div>
+        <div style="margin-top: 1rem; display: flex; gap: 12px; justify-content: flex-end;">
+          <button class="btn btn-danger" id="simulateDeleteBtn" style="background: #fff0f0; color:#b91c1c;"><i class="fas fa-trash-alt"></i> Delete video (demo)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toastMsg" class="toast-message"><i class="fas fa-check-circle"></i> <span id="toastText">Saved!</span></div>
+
+<script>
+  // ---------- DOM elements ----------
+  const titleInput = document.getElementById('videoTitle');
+  const descInput = document.getElementById('videoDesc');
+  const urlInput = document.getElementById('videoUrl');
+  const thumbInput = document.getElementById('thumbUrl');
+  const categorySelect = document.getElementById('videoCategory');
+  const publishDateInput = document.getElementById('publishDate');
+  
+  // Radio groups
+  const visibilityRadios = document.querySelectorAll('input[name="visibility"]');
+  const activeRadios = document.querySelectorAll('input[name="activeStatus"]');
+  
+  // Preview spans
+  const previewTitleSpan = document.getElementById('previewTitle');
+  const previewDescSpan = document.getElementById('previewDesc');
+  const previewUrlSpan = document.getElementById('previewUrl');
+  const previewCategorySpan = document.getElementById('previewCategory');
+  const previewVisibilitySpan = document.getElementById('previewVisibility');
+  const previewStatusSpan = document.getElementById('previewStatus');
+  const previewDateSpan = document.getElementById('previewDate');
+  const previewThumbImg = document.getElementById('previewThumbnail');
+  const thumbPreviewAreaDiv = document.getElementById('thumbPreviewArea');
+  
+  // Helper: show toast message
+  function showToast(message, isError = false) {
+    const toast = document.getElementById('toastMsg');
+    const toastTextSpan = document.getElementById('toastText');
+    toastTextSpan.innerText = message;
+    if (isError) {
+      toast.style.background = "#b91c1c";
+      toast.querySelector('i').className = "fas fa-exclamation-triangle";
+    } else {
+      toast.style.background = "#1e293b";
+      toast.querySelector('i').className = "fas fa-check-circle";
+    }
+    toast.classList.add('show');
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 2800);
+  }
+  
+  // update thumbnail preview (both main preview and thumbnail area)
+  function updateThumbnailPreview() {
+    let thumbUrl = thumbInput.value.trim();
+    if (!thumbUrl) {
+      thumbUrl = 'https://placehold.co/640x360/e2e8f0/1e293b?text=No+Thumbnail';
+    }
+    previewThumbImg.src = thumbUrl;
+    // additional preview inside left card
+    let thumbHtml = `<img src="${thumbUrl}" alt="thumbnail preview" class="thumb-img" onerror="this.src='https://placehold.co/640x360/e2e8f0/1e293b?text=Invalid+URL'">`;
+    thumbPreviewAreaDiv.innerHTML = thumbHtml;
+  }
+  
+  // get current visibility text
+  function getCurrentVisibilityText() {
+    let selectedVal = "public";
+    for (let radio of visibilityRadios) {
+      if (radio.checked) {
+        selectedVal = radio.value;
+        break;
+      }
+    }
+    if (selectedVal === "public") return "Public";
+    if (selectedVal === "unlisted") return "Unlisted";
+    return "Private";
+  }
+  
+  function getCurrentStatusText() {
+    for (let radio of activeRadios) {
+      if (radio.checked) {
+        return radio.value === "active" ? "Active (enabled)" : "Disabled";
+      }
+    }
+    return "Active";
+  }
+  
+  // update entire preview panel
+  function updatePreviewPanel() {
+    previewTitleSpan.innerText = titleInput.value.trim() || "Untitled video";
+    previewDescSpan.innerText = descInput.value.substring(0, 80) + (descInput.value.length > 80 ? "…" : "");
+    previewUrlSpan.innerText = urlInput.value.trim() || "—";
+    let selectedCategoryText = categorySelect.options[categorySelect.selectedIndex]?.text || "Technology";
+    previewCategorySpan.innerText = selectedCategoryText;
+    previewVisibilitySpan.innerText = getCurrentVisibilityText();
+    previewStatusSpan.innerText = getCurrentStatusText();
+    previewDateSpan.innerText = publishDateInput.value || "Not set";
+    updateThumbnailPreview();
+  }
+  
+  // sync toggles active class for styling radios (visual enhancement)
+  function syncToggleStyles() {
+    document.querySelectorAll('.toggle-option').forEach(opt => {
+      opt.classList.remove('active');
+      const radioInside = opt.querySelector('input[type="radio"]');
+      if (radioInside && radioInside.checked) {
+        opt.classList.add('active');
+      }
+    });
+  }
+  
+  // attach listeners to all form inputs
+  function bindFormEvents() {
+    const allInputs = [titleInput, descInput, urlInput, thumbInput, categorySelect, publishDateInput];
+    allInputs.forEach(input => {
+      input.addEventListener('input', () => {
+        updatePreviewPanel();
+        syncToggleStyles();
+      });
+      input.addEventListener('change', () => {
+        updatePreviewPanel();
+        syncToggleStyles();
+      });
+    });
+    
+    visibilityRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        updatePreviewPanel();
+        syncToggleStyles();
+      });
+    });
+    
+    activeRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        updatePreviewPanel();
+        syncToggleStyles();
+      });
+    });
+  }
+  
+  // reset to default mock data (admin can revert)
+  function resetToDefault() {
+    titleInput.value = "Mastering Web3 & AI Synergy";
+    descInput.value = "Explore the fusion of AI and decentralized web in this exclusive interview with industry leaders. Learn about cutting-edge innovations and practical use cases.";
+    urlInput.value = "https://www.youtube.com/embed/dQw4w9WgXcQ";
+    thumbInput.value = "https://picsum.photos/id/1015/640/360";
+    categorySelect.value = "education";
+    publishDateInput.value = "2025-02-15";
+    // set visibility public
+    document.querySelector('input[name="visibility"][value="public"]').checked = true;
+    document.querySelector('input[name="activeStatus"][value="active"]').checked = true;
+    updatePreviewPanel();
+    syncToggleStyles();
+    showToast("Reset to original video data", false);
+  }
+  
+  // save action: collect all metadata and simulate backend update
+  function saveVideoChanges() {
+    const videoData = {
+      title: titleInput.value.trim(),
+      description: descInput.value.trim(),
+      videoUrl: urlInput.value.trim(),
+      thumbnail: thumbInput.value.trim(),
+      category: categorySelect.value,
+      publishDate: publishDateInput.value,
+      visibility: getCurrentVisibilityText().toLowerCase(),
+      status: getCurrentStatusText().includes("Active") ? "active" : "disabled",
+      lastModified: new Date().toISOString()
+    };
+    
+    if (!videoData.title) {
+      showToast("Error: Video title is required", true);
+      return;
+    }
+    if (!videoData.videoUrl) {
+      showToast("Warning: Video URL is empty, but you can still save.", false);
+    }
+    
+    // Here you would normally POST to API endpoint: /api/admin/video/update
+    console.log("📦 SAVED VIDEO DATA:", videoData);
+    // Simulate saving to localStorage / backend
+    localStorage.setItem('admin_video_backup', JSON.stringify(videoData));
+    showToast(`✅ Video "${videoData.title}" updated successfully!`, false);
+    
+    // Optional: additional animation effect on save button
+    const saveBtn = document.querySelector('.btn-primary');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Saved!';
+    setTimeout(() => {
+      saveBtn.innerHTML = originalText;
+    }, 1200);
+  }
+  
+  // Simulate delete demo action
+  function demoDeleteVideo() {
+    if (confirm("⚠️ WARNING: This is a demo deletion. In production, this would permanently remove the video. Continue?")) {
+      showToast("🗑️ Video deletion simulation completed (no actual data removed)", false);
+      // optionally clear form to simulate deletion
+      titleInput.value = "[DELETED] sample video";
+      descInput.value = "This video has been removed from the library.";
+      urlInput.value = "";
+      thumbInput.value = "https://placehold.co/640x360/fee2e2/991b1b?text=Video+Deleted";
+      updatePreviewPanel();
+      syncToggleStyles();
+    }
+  }
+  
+  // load any previously saved data from localStorage (for persistence across refresh)
+  function loadPersistedData() {
+    const saved = localStorage.getItem('admin_video_backup');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        titleInput.value = data.title || titleInput.value;
+        descInput.value = data.description || descInput.value;
+        urlInput.value = data.videoUrl || urlInput.value;
+        thumbInput.value = data.thumbnail || thumbInput.value;
+        if (data.category) categorySelect.value = data.category;
+        if (data.publishDate) publishDateInput.value = data.publishDate;
+        if (data.visibility) {
+          let visVal = "public";
+          if (data.visibility === "public") visVal = "public";
+          else if (data.visibility === "unlisted") visVal = "unlisted";
+          else if (data.visibility === "private") visVal = "private";
+          const targetRadio = document.querySelector(`input[name="visibility"][value="${visVal}"]`);
+          if (targetRadio) targetRadio.checked = true;
+        }
+        if (data.status) {
+          const statusRadio = document.querySelector(`input[name="activeStatus"][value="${data.status}"]`);
+          if (statusRadio) statusRadio.checked = true;
+        }
+        updatePreviewPanel();
+        syncToggleStyles();
+        showToast("Loaded previously saved video data", false);
+      } catch(e) {}
+    } else {
+      updatePreviewPanel();
+      syncToggleStyles();
+    }
+  }
+  
+  // EVENT LISTENERS
+  document.getElementById('videoEditForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveVideoChanges();
+  });
+  
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    resetToDefault();
+  });
+  
+  document.getElementById('simulateDeleteBtn').addEventListener('click', () => {
+    demoDeleteVideo();
+  });
+  
+  // extra live sync on thumbnail error fallback
+  thumbInput.addEventListener('input', () => {
+    updateThumbnailPreview();
+  });
+  
+  // init everything
+  function init() {
+    bindFormEvents();
+    loadPersistedData();   // restore if any previous save exists
+    // double ensure preview sync
+    updatePreviewPanel();
+    syncToggleStyles();
+  }
+  
+  init();
+</script>
+</body>
+</html>
