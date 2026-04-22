@@ -412,7 +412,6 @@ def admin_portfolio():
         cursor.close()
     return render_template("admin_portfolio.html", photographers=photographers)
 
-# ✅ FIX 1: Added id to SELECT so photographer.id works in template buttons
 @app.route("/admin/portfolio/images/<int:photographer_id>")
 @admin_required
 def admin_portfolio_images(photographer_id):
@@ -603,47 +602,61 @@ def admin_add_video():
     cursor.close()
     return render_template("admin_add_video.html", photographers=photographers)
 
+# ---------------- FIXED: ADMIN EDIT VIDEO (REPLACE SINGLE FILE) ----------------
 @app.route("/admin/videos/edit/<int:video_id>", methods=["GET", "POST"])
 @admin_required
 def admin_edit_video(video_id):
     db = get_db()
     cursor = db.cursor(dictionary=True)
+    
     if request.method == "POST":
         title = request.form.get("title")
         description = request.form.get("description")
         duration_seconds = request.form.get("duration_seconds") or None
         is_short_loop = 1 if request.form.get("is_short_loop") else 0
         sort_order = request.form.get("sort_order", 0)
-        poster_url = request.form.get("existing_poster")
-        if 'poster_image' in request.files:
-            file = request.files['poster_image']
-            if file and allowed_image_file(file.filename):
-                filename = secure_filename(f"{uuid.uuid4().hex}_{file.filename}")
-                filepath = os.path.join(app.config['POSTER_FOLDER'], filename)
-                file.save(filepath)
-                poster_url = f"/static/uploads/posters/{filename}"
+        
         try:
+            # Update video metadata
             cursor.execute("""
                 UPDATE videos SET title=%s, description=%s, duration_seconds=%s,
-                    poster_image_url=%s, is_short_loop=%s, sort_order=%s, updated_at=NOW()
+                    is_short_loop=%s, sort_order=%s, updated_at=NOW()
                 WHERE id=%s
-            """, (title, description, duration_seconds, poster_url, is_short_loop, sort_order, video_id))
-            new_files = request.files.getlist("new_video_files")
-            for vfile in new_files:
-                if vfile and allowed_video_file(vfile.filename):
-                    ext = vfile.filename.rsplit('.', 1)[1].lower()
+            """, (title, description, duration_seconds, is_short_loop, sort_order, video_id))
+            
+            # Check if a new video file was uploaded
+            if 'video_file' in request.files:
+                video_file = request.files['video_file']
+                if video_file and allowed_video_file(video_file.filename):
+                    # Get existing video files to delete
+                    cursor.execute("SELECT file_url FROM video_files WHERE video_id = %s", (video_id,))
+                    existing_files = cursor.fetchall()
+                    for file_row in existing_files:
+                        file_path = file_row['file_url'].lstrip('/')
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+                    
+                    # Delete existing video_files records
+                    cursor.execute("DELETE FROM video_files WHERE video_id = %s", (video_id,))
+                    
+                    # Save new video file
+                    ext = video_file.filename.rsplit('.', 1)[1].lower()
                     filename = secure_filename(f"video_{video_id}_{uuid.uuid4().hex}.{ext}")
                     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                    vfile.save(filepath)
+                    video_file.save(filepath)
                     file_url = f"/static/uploads/videos/{filename}"
                     file_size = os.path.getsize(filepath)
+                    
+                    # Insert new video file record
                     cursor.execute("""
                         INSERT INTO video_files (video_id, format, file_url, file_size_bytes, is_default)
                         VALUES (%s, %s, %s, %s, %s)
-                    """, (video_id, ext, file_url, file_size, False))
+                    """, (video_id, ext, file_url, file_size, True))
+            
             db.commit()
             flash("✅ Video updated successfully!", "success")
             return redirect("/admin/videos")
+            
         except Exception as e:
             print("Edit Video Error:", e)
             db.rollback()
@@ -651,6 +664,8 @@ def admin_edit_video(video_id):
         finally:
             cursor.close()
         return redirect(f"/admin/videos/edit/{video_id}")
+    
+    # GET request - display form
     try:
         cursor.execute("SELECT * FROM videos WHERE id = %s", (video_id,))
         video = cursor.fetchone()
@@ -667,6 +682,7 @@ def admin_edit_video(video_id):
         photographers = []
     finally:
         cursor.close()
+    
     return render_template("admin_edit_video.html", video=video, photographers=photographers)
 
 @app.route("/admin/videos/delete_format/<int:file_id>", methods=["POST"])
@@ -755,7 +771,6 @@ def get_videos():
 
 # ==================== PER-PHOTOGRAPHER VIDEO MANAGEMENT ====================
 
-# ✅ FIX 2: Added id to SELECT so photographer.id works in template buttons
 @app.route("/admin/photographer_videos/<int:photographer_id>")
 @admin_required
 def admin_photographer_videos(photographer_id):
@@ -847,7 +862,7 @@ def admin_add_photographer_video(photographer_id):
 
 # ==================== END VIDEO MANAGEMENT ====================
 
-# ==================== EDIT PHOTOGRAPHER (FIXED) ====================
+# ==================== EDIT PHOTOGRAPHER ====================
 @app.route("/admin/edit_photographer/<int:id>", methods=["GET", "POST"])
 @admin_required
 def edit_photographer(id):
