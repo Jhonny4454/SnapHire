@@ -15,7 +15,11 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "secret_key_123")
 
-# ---------------- VIDEO UPLOAD CONFIG ----------------
+# ---------------- CLOUDINARY CONFIG ----------------
+# Set CLOUDINARY_URL environment variable on Render (cloudinary://api_key:api_secret@cloud_name)
+cloudinary.config(cloudinary_url=os.getenv("CLOUDINARY_URL"))
+
+# ---------------- LOCAL UPLOAD FOLDERS (fallback) ----------------
 UPLOAD_FOLDER = 'static/uploads/videos'
 POSTER_FOLDER = 'static/uploads/posters'
 ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'webm', 'ogg', 'mov'}
@@ -31,6 +35,22 @@ def allowed_video_file(filename):
 
 def allowed_image_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
+
+# ---------------- CLOUDINARY UPLOAD HELPER ----------------
+def upload_to_cloudinary(file, folder="videos", resource_type="video"):
+    """Upload a file to Cloudinary and return the secure URL, or None on failure."""
+    try:
+        result = cloudinary.uploader.upload(
+            file,
+            folder=folder,
+            resource_type=resource_type,
+            use_filename=True,
+            unique_filename=True
+        )
+        return result['secure_url']
+    except Exception as e:
+        print(f"Cloudinary upload error: {e}")
+        return None
 
 # ---------------- DATABASE CONFIG ----------------
 DB_HOST = os.getenv("DB_HOST")
@@ -351,6 +371,8 @@ def home():
     return render_template("home.html", packages=packages, package_reviews=package_reviews, orders=orders)
 
 # ==================== PORTFOLIO (IMAGES) ====================
+# (All portfolio routes remain unchanged, they accept direct URLs)
+
 @app.route("/api/portfolio")
 def get_portfolio():
     db = get_db()
@@ -537,7 +559,7 @@ def admin_delete_portfolio_image(image_id):
         cursor.close()
     return redirect("/admin/portfolio")
 
-# ==================== VIDEO MANAGEMENT (COMPLETE) ====================
+# ==================== VIDEO MANAGEMENT (CLOUDINARY) ====================
 
 @app.route("/admin/videos")
 @admin_required
@@ -578,13 +600,21 @@ def admin_add_video():
         is_short_loop = 1 if request.form.get("is_short_loop") else 0
         sort_order = request.form.get("sort_order", 0)
         poster_url = None
+
+        # Handle poster upload via Cloudinary (fallback to local)
         if 'poster_image' in request.files:
             file = request.files['poster_image']
             if file and allowed_image_file(file.filename):
-                filename = secure_filename(f"{uuid.uuid4().hex}_{file.filename}")
-                filepath = os.path.join(app.config['POSTER_FOLDER'], filename)
-                file.save(filepath)
-                poster_url = f"/static/uploads/posters/{filename}"
+                cloud_url = upload_to_cloudinary(file, folder="posters", resource_type="image")
+                if cloud_url:
+                    poster_url = cloud_url
+                else:
+                    # Local fallback
+                    filename = secure_filename(f"{uuid.uuid4().hex}_{file.filename}")
+                    filepath = os.path.join(app.config['POSTER_FOLDER'], filename)
+                    file.save(filepath)
+                    poster_url = f"/static/uploads/posters/{filename}"
+
         cursor = db.cursor()
         try:
             cursor.execute("""
@@ -593,15 +623,23 @@ def admin_add_video():
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
             """, (photographer_id, title, description, duration_seconds, poster_url, is_short_loop, sort_order))
             video_id = cursor.lastrowid
+
+            # Upload video files via Cloudinary
             video_files = request.files.getlist("video_files")
             for idx, vfile in enumerate(video_files):
                 if vfile and allowed_video_file(vfile.filename):
                     ext = vfile.filename.rsplit('.', 1)[1].lower()
-                    filename = secure_filename(f"video_{video_id}_{uuid.uuid4().hex}.{ext}")
-                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                    vfile.save(filepath)
-                    file_url = f"/static/uploads/videos/{filename}"
-                    file_size = os.path.getsize(filepath)
+                    cloud_url = upload_to_cloudinary(vfile, folder="videos", resource_type="video")
+                    if cloud_url:
+                        file_url = cloud_url
+                        file_size = 0  # Cloudinary does not easily provide size; we store 0 or can retrieve later
+                    else:
+                        # Local fallback
+                        filename = secure_filename(f"video_{video_id}_{uuid.uuid4().hex}.{ext}")
+                        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                        vfile.save(filepath)
+                        file_url = f"/static/uploads/videos/{filename}"
+                        file_size = os.path.getsize(filepath)
                     is_default = (idx == 0)
                     cursor.execute("""
                         INSERT INTO video_files (video_id, format, file_url, file_size_bytes, is_default)
@@ -627,52 +665,78 @@ def admin_add_video():
 def admin_edit_video(video_id):
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    
+
     if request.method == "POST":
         title = request.form.get("title")
         description = request.form.get("description")
         duration_seconds = request.form.get("duration_seconds") or None
         is_short_loop = 1 if request.form.get("is_short_loop") else 0
         sort_order = request.form.get("sort_order", 0)
-        
+
+        # Optionally update poster
+        poster_url = None
+        if 'poster_image' in request.files:
+            file = request.files['poster_image']
+            if file and allowed_image_file(file.filename):
+                cloud_url = upload_to_cloudinary(file, folder="posters", resource_type="image")
+                if cloud_url:
+                    poster_url = cloud_url
+                else:
+                    filename = secure_filename(f"{uuid.uuid4().hex}_{file.filename}")
+                    filepath = os.path.join(app.config['POSTER_FOLDER'], filename)
+                    file.save(filepath)
+                    poster_url = f"/static/uploads/posters/{filename}"
+
         try:
-            cursor.execute("""
-                UPDATE videos SET title=%s, description=%s, duration_seconds=%s,
-                    is_short_loop=%s, sort_order=%s, updated_at=NOW()
-                WHERE id=%s
-            """, (title, description, duration_seconds, is_short_loop, sort_order, video_id))
-            
+            if poster_url:
+                cursor.execute("""
+                    UPDATE videos SET title=%s, description=%s, duration_seconds=%s,
+                        is_short_loop=%s, sort_order=%s, poster_image_url=%s, updated_at=NOW()
+                    WHERE id=%s
+                """, (title, description, duration_seconds, is_short_loop, sort_order, poster_url, video_id))
+            else:
+                cursor.execute("""
+                    UPDATE videos SET title=%s, description=%s, duration_seconds=%s,
+                        is_short_loop=%s, sort_order=%s, updated_at=NOW()
+                    WHERE id=%s
+                """, (title, description, duration_seconds, is_short_loop, sort_order, video_id))
+
+            # Replace video file if a new one is provided
             if 'video_file' in request.files:
                 video_file = request.files['video_file']
                 if video_file and video_file.filename != '' and allowed_video_file(video_file.filename):
-                    # Get existing files to delete later (after successful upload)
+                    # Retrieve existing files to delete (only local files)
                     cursor.execute("SELECT file_url FROM video_files WHERE video_id = %s", (video_id,))
                     existing_files = cursor.fetchall()
-                    
-                    ext = video_file.filename.rsplit('.', 1)[1].lower()
-                    filename = secure_filename(f"video_{video_id}_{uuid.uuid4().hex}.{ext}")
-                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                    video_file.save(filepath)
-                    file_url = f"/static/uploads/videos/{filename}"
-                    file_size = os.path.getsize(filepath)
-                    
-                    # Delete old records and files
+                    for f_row in existing_files:
+                        if not f_row['file_url'].startswith('http'):  # local file
+                            local_path = f_row['file_url'].lstrip('/')
+                            if os.path.exists(local_path):
+                                os.remove(local_path)
+                    # Clear old records
                     cursor.execute("DELETE FROM video_files WHERE video_id = %s", (video_id,))
-                    for file_row in existing_files:
-                        file_path = file_row['file_url'].lstrip('/')
-                        if os.path.exists(file_path):
-                            os.remove(file_path)
-                    
-                    # Insert new record
+
+                    ext = video_file.filename.rsplit('.', 1)[1].lower()
+                    cloud_url = upload_to_cloudinary(video_file, folder="videos", resource_type="video")
+                    if cloud_url:
+                        file_url = cloud_url
+                        file_size = 0
+                    else:
+                        filename = secure_filename(f"video_{video_id}_{uuid.uuid4().hex}.{ext}")
+                        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                        video_file.save(filepath)
+                        file_url = f"/static/uploads/videos/{filename}"
+                        file_size = os.path.getsize(filepath)
+
                     cursor.execute("""
                         INSERT INTO video_files (video_id, format, file_url, file_size_bytes, is_default)
                         VALUES (%s, %s, %s, %s, %s)
                     """, (video_id, ext, file_url, file_size, True))
-            
+
             db.commit()
             flash("✅ Video updated successfully!", "success")
             return redirect("/admin/videos")
-            
+
         except Exception as e:
             print(f"Edit Video Error: {e}")
             db.rollback()
@@ -680,8 +744,8 @@ def admin_edit_video(video_id):
         finally:
             cursor.close()
         return redirect(f"/admin/videos/edit/{video_id}")
-    
-    # GET request - display form
+
+    # GET request – display form
     try:
         cursor.execute("SELECT * FROM videos WHERE id = %s", (video_id,))
         video = cursor.fetchone()
@@ -698,7 +762,7 @@ def admin_edit_video(video_id):
         photographers = []
     finally:
         cursor.close()
-    
+
     return render_template("admin_edit_video.html", video=video, photographers=photographers)
 
 @app.route("/admin/videos/delete_format/<int:file_id>", methods=["POST"])
@@ -710,9 +774,12 @@ def admin_delete_video_format(file_id):
         cursor.execute("SELECT file_url FROM video_files WHERE id = %s", (file_id,))
         result = cursor.fetchone()
         if result:
-            file_path = result[0].lstrip('/')
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            file_path = result[0]
+            # Delete only local files
+            if not file_path.startswith('http'):
+                local_path = file_path.lstrip('/')
+                if os.path.exists(local_path):
+                    os.remove(local_path)
         cursor.execute("DELETE FROM video_files WHERE id = %s", (file_id,))
         db.commit()
         flash("Video format deleted", "success")
@@ -734,18 +801,26 @@ def admin_delete_video(video_id):
         result = cursor.fetchone()
         photographer_id = result[0] if result else None
 
+        # Delete poster file (if local)
         cursor.execute("SELECT poster_image_url FROM videos WHERE id = %s", (video_id,))
         poster = cursor.fetchone()
         if poster and poster[0]:
-            poster_path = poster[0].lstrip('/')
-            if os.path.exists(poster_path):
-                os.remove(poster_path)
+            poster_path = poster[0]
+            if not poster_path.startswith('http'):
+                local_path = poster_path.lstrip('/')
+                if os.path.exists(local_path):
+                    os.remove(local_path)
+
+        # Delete video files (local only)
         cursor.execute("SELECT file_url FROM video_files WHERE video_id = %s", (video_id,))
         files = cursor.fetchall()
         for row in files:
-            file_path = row[0].lstrip('/')
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            file_path = row[0]
+            if not file_path.startswith('http'):
+                local_path = file_path.lstrip('/')
+                if os.path.exists(local_path):
+                    os.remove(local_path)
+
         cursor.execute("DELETE FROM videos WHERE id = %s", (video_id,))
         db.commit()
         flash("🗑️ Video deleted permanently", "success")
@@ -828,13 +903,19 @@ def admin_add_photographer_video(photographer_id):
         is_short_loop = 1 if request.form.get("is_short_loop") else 0
         sort_order = request.form.get("sort_order", 0)
         poster_url = None
+
         if 'poster_image' in request.files:
             file = request.files['poster_image']
             if file and allowed_image_file(file.filename):
-                filename = secure_filename(f"{uuid.uuid4().hex}_{file.filename}")
-                filepath = os.path.join(app.config['POSTER_FOLDER'], filename)
-                file.save(filepath)
-                poster_url = f"/static/uploads/posters/{filename}"
+                cloud_url = upload_to_cloudinary(file, folder="posters", resource_type="image")
+                if cloud_url:
+                    poster_url = cloud_url
+                else:
+                    filename = secure_filename(f"{uuid.uuid4().hex}_{file.filename}")
+                    filepath = os.path.join(app.config['POSTER_FOLDER'], filename)
+                    file.save(filepath)
+                    poster_url = f"/static/uploads/posters/{filename}"
+
         cursor = db.cursor()
         try:
             cursor.execute("""
@@ -843,15 +924,21 @@ def admin_add_photographer_video(photographer_id):
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
             """, (photographer_id, title, description, duration_seconds, poster_url, is_short_loop, sort_order))
             video_id = cursor.lastrowid
+
             video_files = request.files.getlist("video_files")
             for idx, vfile in enumerate(video_files):
                 if vfile and allowed_video_file(vfile.filename):
                     ext = vfile.filename.rsplit('.', 1)[1].lower()
-                    filename = secure_filename(f"video_{video_id}_{uuid.uuid4().hex}.{ext}")
-                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                    vfile.save(filepath)
-                    file_url = f"/static/uploads/videos/{filename}"
-                    file_size = os.path.getsize(filepath)
+                    cloud_url = upload_to_cloudinary(vfile, folder="videos", resource_type="video")
+                    if cloud_url:
+                        file_url = cloud_url
+                        file_size = 0
+                    else:
+                        filename = secure_filename(f"video_{video_id}_{uuid.uuid4().hex}.{ext}")
+                        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                        vfile.save(filepath)
+                        file_url = f"/static/uploads/videos/{filename}"
+                        file_size = os.path.getsize(filepath)
                     is_default = (idx == 0)
                     cursor.execute("""
                         INSERT INTO video_files (video_id, format, file_url, file_size_bytes, is_default)
@@ -877,6 +964,7 @@ def admin_add_photographer_video(photographer_id):
     return render_template("admin_add_photographer_video.html", photographer=photographer)
 
 # ==================== EDIT PHOTOGRAPHER ====================
+# (unchanged, but you may want to add Cloudinary for profile_image if needed)
 @app.route("/admin/edit_photographer/<int:id>", methods=["GET", "POST"])
 @admin_required
 def edit_photographer(id):
@@ -927,6 +1015,7 @@ def edit_photographer(id):
         return render_template("admin_edit_photographer.html", photographer=photographer)
 
 # ==================== CART & ORDER ROUTES ====================
+# (unchanged, keep all existing routes)
 @app.route("/cart", methods=["GET", "POST"])
 @login_required
 def cart():
@@ -1583,7 +1672,7 @@ def order_success():
     total = request.args.get("total")
     return render_template("order_success.html", order_id=order_id, total=total)
 
-# ---------------- FAKE PAYMENT GATEWAY (REPLACES OLD CHECKOUT) ----------------
+# ---------------- FAKE PAYMENT GATEWAY (UPDATED) ----------------
 @app.route("/checkout", methods=["GET"])
 @login_required
 def checkout():
@@ -1593,7 +1682,7 @@ def checkout():
         flash("Database error", "error")
         return redirect("/cart")
     cursor = db.cursor(dictionary=True)
-    
+
     cursor.execute("""
         SELECT up.id AS cart_id, up.quantity, up.location, up.scheduled_date,
                p.package_name, p.package_price, p.duration,
@@ -1606,18 +1695,18 @@ def checkout():
     """, (session["user_id"],))
     items = cursor.fetchall()
     cursor.close()
-    
+
     for item in items:
         if not item["photographer_id"] or not item["location"] or not item["scheduled_date"]:
             flash("⚠️ Please complete all package details before checkout!", "error")
             return redirect("/cart")
-    
+
     if not items:
         flash("Your cart is empty!", "error")
         return redirect("/cart")
-    
+
     total = sum(item["package_price"] * item["quantity"] for item in items)
-    
+
     # Store checkout intent in session
     session["checkout_intent"] = {
         "items": items,
@@ -1636,11 +1725,10 @@ def payment():
     if not intent:
         flash("No pending checkout. Please add items to cart.", "error")
         return redirect("/cart")
-    
+
     # Convert stored values to appropriate types (session stores strings)
     try:
         intent["total"] = float(intent["total"])
-        # Ensure each item's price is float
         for item in intent["items"]:
             item["package_price"] = float(item["package_price"])
     except (ValueError, TypeError, KeyError) as e:
@@ -1648,23 +1736,24 @@ def payment():
         session.pop("checkout_intent", None)
         flash("Checkout data corrupted. Please try again.", "error")
         return redirect("/cart")
-    
+
     if request.method == "POST":
-        # Simulate payment processing
         payment_method = request.form.get("payment_method", "card")
-        card_number = request.form.get("card_number", "").replace(" ", "")
-        
-        # Demo logic: success only with test card 4242 4242 4242 4242
-        if card_number != "4242424242424242":
-            flash("❌ Payment declined. Please use test card: 4242 4242 4242 4242", "error")
-            return redirect("/payment")
-        
-        # Payment "successful" – create the order
+
+        # Card validation only for card payments
+        if payment_method == "card":
+            card_number = request.form.get("card_number", "").replace(" ", "")
+            if card_number != "4242424242424242":
+                flash("❌ Payment declined. Please use test card: 4242 4242 4242 4242", "error")
+                return redirect("/payment")
+        # For UPI, Cash, NEFT – always succeed
+
+        # Create order
         db = get_db()
         if not db:
             flash("Database connection error", "error")
             return redirect("/cart")
-            
+
         cursor = db.cursor()
         try:
             order_code = str(uuid.uuid4())[:8]
@@ -1680,7 +1769,6 @@ def payment():
                 order_code,
                 intent["scheduled_date"]
             ))
-            # Insert order items from intent
             for item in intent["items"]:
                 cursor.execute("""
                     INSERT INTO order_items (order_id, package_name, price, duration, location, quantity, photographer_id)
@@ -1697,7 +1785,6 @@ def payment():
             # Clear cart
             cursor.execute("DELETE FROM user_packages WHERE user_id = %s", (session["user_id"],))
             db.commit()
-            # Clear checkout intent
             session.pop("checkout_intent", None)
             flash("🎉 Payment successful! Order placed.", "success")
             return redirect(f"/order-success?order_id={order_code}&total={intent['total']}")
@@ -1708,7 +1795,7 @@ def payment():
             return redirect("/cart")
         finally:
             cursor.close()
-    
+
     # GET request – show payment form
     return render_template("payment.html", intent=intent)
 
