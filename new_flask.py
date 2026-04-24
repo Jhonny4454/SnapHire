@@ -1,3 +1,8 @@
+# ---------------------------------------------------------------------------- #
+#  SnapHire – Photography Booking & Portfolio Platform                        #
+#  Flask backend with MySQL (Railway), Cloudinary (media), and Render hosting #
+# ---------------------------------------------------------------------------- #
+
 from flask import Flask, render_template, request, redirect, session, g, jsonify, flash
 import mysql.connector
 from mysql.connector import Error
@@ -13,13 +18,37 @@ from functools import wraps
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "secret_key_123")
 
-# ---------------- CLOUDINARY CONFIG ----------------
-# Set CLOUDINARY_URL environment variable on Render (cloudinary://api_key:api_secret@cloud_name)
+# =============================================================================
+#  SECURITY: Secret Key & Session Cookie Configuration
+# =============================================================================
+# A strong secret key is required to sign session cookies.
+# In production, always set the SECRET_KEY environment variable on Render.
+app.secret_key = os.getenv("SECRET_KEY", "secret_key_123")  # fallback for local dev only
+
+# Determine if we are running on Render (production)
+ON_RENDER = os.getenv("DB_HOST") is not None
+
+# Enforce secure session cookies
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,                # JavaScript cannot access the cookie
+    SESSION_COOKIE_SECURE=ON_RENDER,              # cookie sent only over HTTPS on Render
+    SESSION_COOKIE_SAMESITE='Lax',               # protects against CSRF attacks
+    # Use a __Host- prefix when secure (requires Secure flag, so only on Render)
+    SESSION_COOKIE_NAME='__Host-session' if ON_RENDER else 'session'
+)
+# -----------------------------------------------------------------------------
+
+# =============================================================================
+#  Cloudinary Configuration (for permanent video/image storage)
+# =============================================================================
+# CLOUDINARY_URL must be set in Render environment:
+#   cloudinary://api_key:api_secret@cloud_name
 cloudinary.config(cloudinary_url=os.getenv("CLOUDINARY_URL"))
 
-# ---------------- LOCAL UPLOAD FOLDERS (fallback) ----------------
+# -----------------------------------------------------------------------------
+#  Local Upload Folders (used only as a fallback when Cloudinary is unavailable)
+# -----------------------------------------------------------------------------
 UPLOAD_FOLDER = 'static/uploads/videos'
 POSTER_FOLDER = 'static/uploads/posters'
 ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'webm', 'ogg', 'mov'}
@@ -30,15 +59,23 @@ app.config['POSTER_FOLDER'] = POSTER_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(POSTER_FOLDER, exist_ok=True)
 
+
+# -----------------------------------------------------------------------------
+#  Helper: validate file extensions
+# -----------------------------------------------------------------------------
 def allowed_video_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_VIDEO_EXTENSIONS
+
 
 def allowed_image_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
 
-# ---------------- CLOUDINARY UPLOAD HELPER ----------------
+
+# -----------------------------------------------------------------------------
+#  Helper: upload a file to Cloudinary and return its secure URL
+# -----------------------------------------------------------------------------
 def upload_to_cloudinary(file, folder="videos", resource_type="video"):
-    """Upload a file to Cloudinary and return the secure URL, or None on failure."""
+    """Upload a file to Cloudinary. Returns the secure URL or None on failure."""
     try:
         result = cloudinary.uploader.upload(
             file,
@@ -52,15 +89,17 @@ def upload_to_cloudinary(file, folder="videos", resource_type="video"):
         print(f"Cloudinary upload error: {e}")
         return None
 
-# ---------------- DATABASE CONFIG ----------------
+
+# =============================================================================
+#  Database Configuration
+# =============================================================================
 DB_HOST = os.getenv("DB_HOST")
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASS = os.getenv("DB_PASS")
 DB_PORT = os.getenv("DB_PORT")
 
-ON_RENDER = DB_HOST is not None
-
+# Fallback for local development (if no env vars are set)
 if not all([DB_HOST, DB_NAME, DB_USER, DB_PASS]):
     print("⚠️ Running locally (MySQL localhost)")
     DB_HOST = "localhost"
@@ -73,8 +112,12 @@ else:
     DB_PORT = int(DB_PORT) if DB_PORT else 3306
     print(f"📊 Cloud DB Connected → {DB_HOST}:{DB_PORT} | {DB_NAME}")
 
-# ---------------- DECORATORS ----------------
+
+# =============================================================================
+#  Decorators for Access Control
+# =============================================================================
 def login_required(f):
+    """Redirect to login if the user is not signed in."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if "user_id" not in session:
@@ -83,7 +126,9 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
 def admin_required(f):
+    """Redirect to admin login if the admin is not logged in."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if "admin_id" not in session:
@@ -92,12 +137,19 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# ---------------- HASH PASSWORD ----------------
+
+# -----------------------------------------------------------------------------
+#  Password Hashing (SHA-256 – consider upgrading to bcrypt in production)
+# -----------------------------------------------------------------------------
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-# ---------------- DATABASE CONNECTION ----------------
+
+# =============================================================================
+#  Database Connection with Retry Logic
+# =============================================================================
 def get_db():
+    """Return a MySQL connection from Flask's 'g' context. Retries on failure."""
     if "db" not in g:
         max_retries = 3
         retry_delay = 2
@@ -114,7 +166,7 @@ def get_db():
                     'connection_timeout': 30
                 }
                 if ON_RENDER:
-                    # Use SSL for cloud databases (required by Render MySQL)
+                    # TLS/SSL is required for cloud databases like Railway
                     config['ssl_ca'] = '/etc/ssl/certs/ca-certificates.crt'
                 g.db = mysql.connector.connect(**config)
                 print("✅ Database connected successfully")
@@ -131,14 +183,20 @@ def get_db():
                 return None
     return g.db
 
+
 @app.teardown_appcontext
 def close_db(exception):
+    """Close the database connection at the end of a request."""
     db = g.pop("db", None)
     if db is not None and db.is_connected():
         db.close()
 
-# ---------------- CREATE ADMIN USER ----------------
+
+# -----------------------------------------------------------------------------
+#  Auto-create Admin User on Startup
+# -----------------------------------------------------------------------------
 def create_admin_user():
+    """Insert default admin account if it doesn't exist."""
     db = get_db()
     if not db:
         return
@@ -149,7 +207,8 @@ def create_admin_user():
             cursor.execute("""
                 INSERT INTO users (first_name, last_name, email, mobile, gender, username, password, role, created_at)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, ('Admin', 'User', 'admin@snaphire.com', '0000000000', 'other', 'admin', hash_password('admin123'), 'admin', datetime.now()))
+            """, ('Admin', 'User', 'admin@snaphire.com', '0000000000', 'other',
+                  'admin', hash_password('admin123'), 'admin', datetime.now()))
             db.commit()
             print("✅ Admin user created successfully")
     except Exception as e:
@@ -157,8 +216,12 @@ def create_admin_user():
     finally:
         cursor.close()
 
-# ---------------- CREATE VIDEO TABLES IF NOT EXISTS ----------------
+
+# -----------------------------------------------------------------------------
+#  Auto-create Video Tables on Startup
+# -----------------------------------------------------------------------------
 def create_video_tables():
+    """Ensure the videos and video_files tables exist."""
     db = get_db()
     if not db:
         return
@@ -205,7 +268,12 @@ def create_video_tables():
     finally:
         cursor.close()
 
-# ---------------- TEST DB ROUTE ----------------
+
+# =============================================================================
+#  ROUTES – Public & Authentication
+# =============================================================================
+
+# ---------- Test Database Connection ----------
 @app.route("/test-db")
 def test_db():
     try:
@@ -220,9 +288,11 @@ def test_db():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ---------------- ADMIN LOGIN (Database-based) ----------------
+
+# ---------- Admin Login (database-backed) ----------
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
+    """Admin login: checks credentials against the users table (role='admin')."""
     if request.method == "POST":
         db = get_db()
         if not db:
@@ -249,9 +319,11 @@ def admin_login():
             return render_template("admin_login.html", error="Invalid admin credentials")
     return render_template("admin_login.html")
 
-# ---------------- SIGNUP ----------------
+
+# ---------- User Signup ----------
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
+    """Register a new regular user."""
     if request.method == "POST":
         db = get_db()
         if not db:
@@ -265,11 +337,13 @@ def signup():
             if request.form["username"].lower() == "admin":
                 flash("Username not available", "error")
                 return redirect("/signup")
+            # Check for existing username/email
             cursor.execute("SELECT id FROM users WHERE username = %s OR email = %s",
-                          (request.form["username"], request.form["email"]))
+                           (request.form["username"], request.form["email"]))
             if cursor.fetchone():
                 flash("Username or email already exists. Please choose another.", "error")
                 return redirect("/signup")
+            # Insert new user
             cursor.execute("""
                 INSERT INTO users (first_name, last_name, email, mobile, gender, username, password, role)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, 'user')
@@ -294,9 +368,11 @@ def signup():
             cursor.close()
     return render_template("signup.html")
 
-# ---------------- LOGIN ----------------
+
+# ---------- User Login ----------
 @app.route("/", methods=["GET", "POST"])
 def login():
+    """Handle user login and set session."""
     if request.method == "POST":
         db = get_db()
         if not db:
@@ -315,6 +391,8 @@ def login():
         finally:
             cursor.close()
         if user:
+            # Clear old session and create a fresh one (prevents fixation)
+            session.clear()
             session["user_id"] = user["id"]
             session["username"] = user["username"]
             session["user_name"] = f"{user['first_name']} {user['last_name']}"
@@ -323,10 +401,12 @@ def login():
         return render_template("login.html", error="Invalid username or password")
     return render_template("login.html")
 
-# ---------------- HOME ----------------
+
+# ---------- Home Page (after login) ----------
 @app.route("/home")
 @login_required
 def home():
+    """Display packages, reviews, and recent orders for the logged-in user."""
     db = get_db()
     if not db:
         flash("Database connection error", "error")
@@ -370,11 +450,13 @@ def home():
         cursor.close()
     return render_template("home.html", packages=packages, package_reviews=package_reviews, orders=orders)
 
-# ==================== PORTFOLIO (IMAGES) ====================
-# (All portfolio routes remain unchanged, they accept direct URLs)
+
+# ========================  PORTFOLIO (IMAGES)  ==============================
+# (These routes accept direct image URLs – no file uploads needed.)
 
 @app.route("/api/portfolio")
 def get_portfolio():
+    """API endpoint: returns a list of photographers with their portfolio images."""
     db = get_db()
     if not db:
         return jsonify([])
@@ -426,9 +508,11 @@ def get_portfolio():
     finally:
         cursor.close()
 
+
 @app.route("/portfolio")
 def portfolio_page():
     return render_template("portfolio.html")
+
 
 @app.route("/admin/portfolio")
 @admin_required
@@ -454,6 +538,7 @@ def admin_portfolio():
         cursor.close()
     return render_template("admin_portfolio.html", photographers=photographers)
 
+
 @app.route("/admin/portfolio/images/<int:photographer_id>")
 @admin_required
 def admin_portfolio_images(photographer_id):
@@ -468,6 +553,7 @@ def admin_portfolio_images(photographer_id):
     images = cursor.fetchall()
     cursor.close()
     return render_template("admin_portfolio_images.html", photographer=photographer, images=images)
+
 
 @app.route("/admin/portfolio/add/<int:photographer_id>", methods=["GET", "POST"])
 @admin_required
@@ -501,6 +587,7 @@ def admin_add_portfolio_image(photographer_id):
         flash("Photographer not found!", "error")
         return redirect("/admin/portfolio")
     return render_template("admin_add_portfolio_image.html", photographer=photographer)
+
 
 @app.route("/admin/portfolio/edit/<int:image_id>", methods=["GET", "POST"])
 @admin_required
@@ -542,6 +629,7 @@ def admin_edit_portfolio_image(image_id):
     cursor.close()
     return render_template("admin_edit_portfolio_image.html", image=image, photographer=photographer)
 
+
 @app.route("/admin/portfolio/delete/<int:image_id>", methods=["POST"])
 @admin_required
 def admin_delete_portfolio_image(image_id):
@@ -559,11 +647,13 @@ def admin_delete_portfolio_image(image_id):
         cursor.close()
     return redirect("/admin/portfolio")
 
-# ==================== VIDEO MANAGEMENT (CLOUDINARY) ====================
+
+# ========================  VIDEO MANAGEMENT (CLOUDINARY)  ===================
 
 @app.route("/admin/videos")
 @admin_required
 def admin_videos():
+    """List all videos in admin panel."""
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -588,9 +678,11 @@ def admin_videos():
         cursor.close()
     return render_template("admin_videos.html", videos=videos)
 
+
 @app.route("/admin/videos/add", methods=["GET", "POST"])
 @admin_required
 def admin_add_video():
+    """Add a new video (uploads video & poster to Cloudinary, fallback to local)."""
     db = get_db()
     if request.method == "POST":
         photographer_id = request.form.get("photographer_id")
@@ -601,7 +693,7 @@ def admin_add_video():
         sort_order = request.form.get("sort_order", 0)
         poster_url = None
 
-        # Handle poster upload via Cloudinary (fallback to local)
+        # Upload poster image
         if 'poster_image' in request.files:
             file = request.files['poster_image']
             if file and allowed_image_file(file.filename):
@@ -609,7 +701,7 @@ def admin_add_video():
                 if cloud_url:
                     poster_url = cloud_url
                 else:
-                    # Local fallback
+                    # local fallback
                     filename = secure_filename(f"{uuid.uuid4().hex}_{file.filename}")
                     filepath = os.path.join(app.config['POSTER_FOLDER'], filename)
                     file.save(filepath)
@@ -624,7 +716,7 @@ def admin_add_video():
             """, (photographer_id, title, description, duration_seconds, poster_url, is_short_loop, sort_order))
             video_id = cursor.lastrowid
 
-            # Upload video files via Cloudinary
+            # Upload video files
             video_files = request.files.getlist("video_files")
             for idx, vfile in enumerate(video_files):
                 if vfile and allowed_video_file(vfile.filename):
@@ -632,9 +724,9 @@ def admin_add_video():
                     cloud_url = upload_to_cloudinary(vfile, folder="videos", resource_type="video")
                     if cloud_url:
                         file_url = cloud_url
-                        file_size = 0  # Cloudinary does not easily provide size; we store 0 or can retrieve later
+                        file_size = 0  # exact size not retrieved from Cloudinary in this simplified version
                     else:
-                        # Local fallback
+                        # local fallback
                         filename = secure_filename(f"video_{video_id}_{uuid.uuid4().hex}.{ext}")
                         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                         vfile.save(filepath)
@@ -660,9 +752,11 @@ def admin_add_video():
     cursor.close()
     return render_template("admin_add_video.html", photographers=photographers)
 
+
 @app.route("/admin/videos/edit/<int:video_id>", methods=["GET", "POST"])
 @admin_required
 def admin_edit_video(video_id):
+    """Edit video metadata and optionally replace the file."""
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
@@ -673,7 +767,7 @@ def admin_edit_video(video_id):
         is_short_loop = 1 if request.form.get("is_short_loop") else 0
         sort_order = request.form.get("sort_order", 0)
 
-        # Optionally update poster
+        # optional poster update
         poster_url = None
         if 'poster_image' in request.files:
             file = request.files['poster_image']
@@ -688,6 +782,7 @@ def admin_edit_video(video_id):
                     poster_url = f"/static/uploads/posters/{filename}"
 
         try:
+            # update metadata
             if poster_url:
                 cursor.execute("""
                     UPDATE videos SET title=%s, description=%s, duration_seconds=%s,
@@ -701,19 +796,18 @@ def admin_edit_video(video_id):
                     WHERE id=%s
                 """, (title, description, duration_seconds, is_short_loop, sort_order, video_id))
 
-            # Replace video file if a new one is provided
+            # replace video file if a new one is uploaded
             if 'video_file' in request.files:
                 video_file = request.files['video_file']
                 if video_file and video_file.filename != '' and allowed_video_file(video_file.filename):
-                    # Retrieve existing files to delete (only local files)
+                    # delete only old local files (Cloudinary files are kept)
                     cursor.execute("SELECT file_url FROM video_files WHERE video_id = %s", (video_id,))
                     existing_files = cursor.fetchall()
                     for f_row in existing_files:
-                        if not f_row['file_url'].startswith('http'):  # local file
+                        if not f_row['file_url'].startswith('http'):
                             local_path = f_row['file_url'].lstrip('/')
                             if os.path.exists(local_path):
                                 os.remove(local_path)
-                    # Clear old records
                     cursor.execute("DELETE FROM video_files WHERE video_id = %s", (video_id,))
 
                     ext = video_file.filename.rsplit('.', 1)[1].lower()
@@ -745,7 +839,7 @@ def admin_edit_video(video_id):
             cursor.close()
         return redirect(f"/admin/videos/edit/{video_id}")
 
-    # GET request – display form
+    # GET request – show form with current data
     try:
         cursor.execute("SELECT * FROM videos WHERE id = %s", (video_id,))
         video = cursor.fetchone()
@@ -765,9 +859,11 @@ def admin_edit_video(video_id):
 
     return render_template("admin_edit_video.html", video=video, photographers=photographers)
 
+
 @app.route("/admin/videos/delete_format/<int:file_id>", methods=["POST"])
 @admin_required
 def admin_delete_video_format(file_id):
+    """Remove a specific video format (e.g., a lower-quality file)."""
     db = get_db()
     cursor = db.cursor()
     try:
@@ -775,7 +871,6 @@ def admin_delete_video_format(file_id):
         result = cursor.fetchone()
         if result:
             file_path = result[0]
-            # Delete only local files
             if not file_path.startswith('http'):
                 local_path = file_path.lstrip('/')
                 if os.path.exists(local_path):
@@ -791,9 +886,11 @@ def admin_delete_video_format(file_id):
         cursor.close()
     return redirect(request.referrer or "/admin/videos")
 
+
 @app.route("/admin/videos/delete/<int:video_id>", methods=["POST"])
 @admin_required
 def admin_delete_video(video_id):
+    """Delete a video and its local files (Cloudinary files remain unless manually removed)."""
     db = get_db()
     cursor = db.cursor()
     try:
@@ -801,7 +898,7 @@ def admin_delete_video(video_id):
         result = cursor.fetchone()
         photographer_id = result[0] if result else None
 
-        # Delete poster file (if local)
+        # Delete poster (local only)
         cursor.execute("SELECT poster_image_url FROM videos WHERE id = %s", (video_id,))
         poster = cursor.fetchone()
         if poster and poster[0]:
@@ -836,8 +933,10 @@ def admin_delete_video(video_id):
     finally:
         cursor.close()
 
+
 @app.route("/api/videos")
 def get_videos():
+    """API: return active videos (used by frontend sliders)."""
     db = get_db()
     if not db:
         return jsonify([])
@@ -860,11 +959,13 @@ def get_videos():
         cursor.close()
     return jsonify(videos)
 
-# ==================== PER-PHOTOGRAPHER VIDEO MANAGEMENT ====================
+
+# ====================  PER-PHOTOGRAPHER VIDEO MANAGEMENT  ====================
 
 @app.route("/admin/photographer_videos/<int:photographer_id>")
 @admin_required
 def admin_photographer_videos(photographer_id):
+    """List videos for a specific photographer."""
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -892,9 +993,11 @@ def admin_photographer_videos(photographer_id):
         cursor.close()
     return render_template("admin_photographer_videos.html", photographer=photographer, videos=videos)
 
+
 @app.route("/admin/photographer_videos/add/<int:photographer_id>", methods=["GET", "POST"])
 @admin_required
 def admin_add_photographer_video(photographer_id):
+    """Add a video for a specific photographer (similar to admin_add_video)."""
     db = get_db()
     if request.method == "POST":
         title = request.form.get("title")
@@ -963,11 +1066,14 @@ def admin_add_photographer_video(photographer_id):
         return redirect("/admin/photographers")
     return render_template("admin_add_photographer_video.html", photographer=photographer)
 
-# ==================== EDIT PHOTOGRAPHER ====================
-# (unchanged, but you may want to add Cloudinary for profile_image if needed)
+
+# =============================================================================
+#  Photographer Editing
+# =============================================================================
 @app.route("/admin/edit_photographer/<int:id>", methods=["GET", "POST"])
 @admin_required
 def edit_photographer(id):
+    """Edit photographer details."""
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -1014,11 +1120,14 @@ def edit_photographer(id):
             return redirect("/admin/photographers")
         return render_template("admin_edit_photographer.html", photographer=photographer)
 
-# ==================== CART & ORDER ROUTES ====================
-# (unchanged, keep all existing routes)
+
+# =============================================================================
+#  CART & ORDER ROUTES
+# =============================================================================
 @app.route("/cart", methods=["GET", "POST"])
 @login_required
 def cart():
+    """View and update the shopping cart."""
     user_id = session.get("user_id")
     db = get_db()
     if not db:
@@ -1026,6 +1135,7 @@ def cart():
         return redirect("/home")
     cursor = db.cursor(dictionary=True)
     if request.method == "POST":
+        # Bulk update cart items (photographer, location, date)
         try:
             for key, value in request.form.items():
                 if key.startswith("photographer_"):
@@ -1047,6 +1157,7 @@ def cart():
         finally:
             cursor.close()
         return redirect("/cart")
+    # GET: display cart
     try:
         cursor.execute("""
             SELECT up.*, p.package_name, p.package_price, p.duration,
@@ -1077,20 +1188,25 @@ def cart():
         cursor.close()
     return render_template("cart.html", cart_items=cart_items, total=total, photographers=photographers)
 
+
 @app.route("/add_package/<int:package_id>", methods=["POST"])
 @login_required
 def add_package(package_id):
+    """AJAX endpoint: add a package to the cart."""
     db = get_db()
     if not db:
         return jsonify({"status": "error", "message": "Database error"})
     cursor = db.cursor(dictionary=True)
     try:
-        cursor.execute("SELECT * FROM user_packages WHERE user_id=%s AND package_id=%s", (session["user_id"], package_id))
+        cursor.execute("SELECT * FROM user_packages WHERE user_id=%s AND package_id=%s",
+                       (session["user_id"], package_id))
         existing = cursor.fetchone()
         if existing:
-            cursor.execute("UPDATE user_packages SET quantity = quantity + 1 WHERE user_id=%s AND package_id=%s", (session["user_id"], package_id))
+            cursor.execute("UPDATE user_packages SET quantity = quantity + 1 WHERE user_id=%s AND package_id=%s",
+                           (session["user_id"], package_id))
         else:
-            cursor.execute("INSERT INTO user_packages (user_id, package_id, quantity) VALUES (%s,%s,1)", (session["user_id"], package_id))
+            cursor.execute("INSERT INTO user_packages (user_id, package_id, quantity) VALUES (%s,%s,1)",
+                           (session["user_id"], package_id))
         db.commit()
         return jsonify({"status": "success", "message": "Package added to cart"})
     except Exception as e:
@@ -1100,22 +1216,27 @@ def add_package(package_id):
     finally:
         cursor.close()
 
+
 @app.route("/remove/<int:id>", methods=["POST"])
 @login_required
 def remove(id):
+    """Remove one item from cart (decrement quantity or delete)."""
     db = get_db()
     if not db:
         flash("Database error", "error")
         return redirect("/cart")
     cursor = db.cursor(dictionary=True)
     try:
-        cursor.execute("SELECT quantity FROM user_packages WHERE id=%s AND user_id=%s", (id, session["user_id"]))
+        cursor.execute("SELECT quantity FROM user_packages WHERE id=%s AND user_id=%s",
+                       (id, session["user_id"]))
         item = cursor.fetchone()
         if item:
             if item["quantity"] > 1:
-                cursor.execute("UPDATE user_packages SET quantity = quantity - 1 WHERE id=%s AND user_id=%s", (id, session["user_id"]))
+                cursor.execute("UPDATE user_packages SET quantity = quantity - 1 WHERE id=%s AND user_id=%s",
+                               (id, session["user_id"]))
             else:
-                cursor.execute("DELETE FROM user_packages WHERE id=%s AND user_id=%s", (id, session["user_id"]))
+                cursor.execute("DELETE FROM user_packages WHERE id=%s AND user_id=%s",
+                               (id, session["user_id"]))
         db.commit()
         flash("Item removed from cart", "success")
     except Exception as e:
@@ -1126,9 +1247,11 @@ def remove(id):
         cursor.close()
     return redirect("/cart")
 
+
 @app.route("/empty_cart", methods=["POST"])
 @login_required
 def empty_cart():
+    """Delete all items from the cart."""
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -1146,9 +1269,11 @@ def empty_cart():
         cursor.close()
     return redirect("/cart")
 
+
 @app.route("/update_item/<int:item_id>", methods=["POST"])
 @login_required
 def update_item(item_id):
+    """Update a single cart item's details (photographer, location, date)."""
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -1174,9 +1299,11 @@ def update_item(item_id):
         cursor.close()
     return redirect("/cart")
 
+
 @app.route("/edit-profile", methods=["GET", "POST"])
 @login_required
 def edit_profile():
+    """Allow user to update their profile."""
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -1188,7 +1315,9 @@ def edit_profile():
                 UPDATE users
                 SET first_name=%s, last_name=%s, email=%s, mobile=%s, gender=%s
                 WHERE id=%s
-            """, (request.form["first_name"], request.form["last_name"], request.form["email"], request.form["mobile"], request.form["gender"], session["user_id"]))
+            """, (request.form["first_name"], request.form["last_name"],
+                  request.form["email"], request.form["mobile"],
+                  request.form["gender"], session["user_id"]))
             db.commit()
             flash("✅ Profile updated successfully!", "success")
             return redirect("/home")
@@ -1209,6 +1338,8 @@ def edit_profile():
             cursor.close()
         return render_template("edit_profile.html", user=user)
 
+
+# Static pages
 @app.route("/terms")
 def terms():
     return render_template("terms.html")
@@ -1225,9 +1356,14 @@ def about():
 def get_hired():
     return render_template("get_hired.html")
 
+
+# =============================================================================
+#  ORDER MANAGEMENT (User)
+# =============================================================================
 @app.route("/orders")
 @login_required
 def orders():
+    """List all orders for the logged-in user."""
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -1243,9 +1379,11 @@ def orders():
         cursor.close()
     return render_template("orders.html", orders=orders)
 
+
 @app.route("/order_details/<string:order_id>")
 @login_required
 def order_details(order_id):
+    """Show details of a single order with tax/charge breakdown."""
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -1285,8 +1423,13 @@ def order_details(order_id):
         cursor.close()
     return render_template("order_details.html", order=order, items=items, subtotal=subtotal, gst_amount=gst_amount, service_charge=service_charge, grand_total=grand_total)
 
+
+# =============================================================================
+#  PHOTOGRAPHER APPLICATION
+# =============================================================================
 @app.route("/photographer/apply", methods=["POST"])
 def apply_photographer():
+    """Handle photographer job application."""
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -1296,7 +1439,9 @@ def apply_photographer():
         cursor.execute("""
             INSERT INTO photographers_applications (first_name, last_name, email, phone, address, years_exp, months_exp)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (request.form["first_name"], request.form["last_name"], request.form["email"], request.form["phone"], request.form["address"], request.form["years"], request.form["months"]))
+        """, (request.form["first_name"], request.form["last_name"],
+              request.form["email"], request.form["phone"],
+              request.form["address"], request.form["years"], request.form["months"]))
         db.commit()
         flash("🎉 Your application has been submitted successfully!", "success")
     except Exception as e:
@@ -1307,13 +1452,20 @@ def apply_photographer():
         cursor.close()
     return redirect("/photographer/submitted")
 
+
 @app.route("/photographer/submitted")
 def photographer_submitted():
     return render_template("photographer_submitted.html")
 
+
+# =============================================================================
+#  ADMIN ROUTES (Dashboard, Order Management, Users, Packages, Photographers)
+# =============================================================================
+
 @app.route("/admin/dashboard")
 @admin_required
 def admin_dashboard():
+    """Admin dashboard with summary statistics."""
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -1351,17 +1503,19 @@ def admin_dashboard():
     finally:
         cursor.close()
     return render_template("admin_dashboard.html",
-                         total_orders=total_orders,
-                         revenue=revenue,
-                         total_users=total_users,
-                         total_photographers=total_photographers,
-                         total_videos=total_videos,
-                         recent_orders=recent_orders,
-                         applications=applications)
+                           total_orders=total_orders,
+                           revenue=revenue,
+                           total_users=total_users,
+                           total_photographers=total_photographers,
+                           total_videos=total_videos,
+                           recent_orders=recent_orders,
+                           applications=applications)
+
 
 @app.route("/admin/order_details/<string:order_id>")
 @admin_required
 def admin_order_details(order_id):
+    """Admin view of a single order."""
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -1393,6 +1547,9 @@ def admin_order_details(order_id):
         cursor.close()
     return render_template("admin_order_details.html", order=order, items=items)
 
+
+# ... (remaining admin routes for photographers, packages, users are mostly unchanged)
+
 @app.route("/admin/photographers")
 @admin_required
 def admin_photographers():
@@ -1410,6 +1567,7 @@ def admin_photographers():
     finally:
         cursor.close()
     return render_template("admin_photographers.html", photographers=photographers)
+
 
 @app.route("/admin/approve/<int:id>", methods=["POST"])
 @admin_required
@@ -1436,6 +1594,7 @@ def approve_photographer(id):
         cursor.close()
     return redirect("/admin/dashboard")
 
+
 @app.route("/admin/reject/<int:id>", methods=["POST"])
 @admin_required
 def reject_photographer(id):
@@ -1455,6 +1614,7 @@ def reject_photographer(id):
     finally:
         cursor.close()
     return redirect("/admin/dashboard")
+
 
 @app.route("/admin/orders")
 @admin_required
@@ -1477,6 +1637,7 @@ def admin_orders():
         cursor.close()
     return render_template("admin_orders.html", orders=orders)
 
+
 @app.route("/admin/update_order_status/<string:order_id>", methods=["POST"])
 @admin_required
 def update_order_status(order_id):
@@ -1498,6 +1659,7 @@ def update_order_status(order_id):
         cursor.close()
     return redirect(f"/admin/order_details/{order_id}")
 
+
 @app.route("/admin/packages", methods=["GET", "POST"])
 @admin_required
 def admin_packages():
@@ -1509,7 +1671,8 @@ def admin_packages():
     if request.method == "POST":
         try:
             cursor.execute("INSERT INTO packages (package_name, package_price, duration, image_filename) VALUES (%s, %s, %s, %s)",
-                           (request.form.get("package_name"), request.form.get("package_price"), request.form.get("duration"), request.form.get("image_filename")))
+                           (request.form.get("package_name"), request.form.get("package_price"),
+                            request.form.get("duration"), request.form.get("image_filename")))
             db.commit()
             flash("✅ Package added successfully!", "success")
         except Exception as e:
@@ -1526,6 +1689,7 @@ def admin_packages():
     finally:
         cursor.close()
     return render_template("admin_packages.html", packages=packages)
+
 
 @app.route("/admin/delete_package/<int:id>", methods=["POST"])
 @admin_required
@@ -1548,6 +1712,7 @@ def delete_package(id):
         cursor.close()
     return redirect("/admin/packages")
 
+
 @app.route("/admin/edit_package/<int:id>", methods=["GET", "POST"])
 @admin_required
 def edit_package(id):
@@ -1559,7 +1724,8 @@ def edit_package(id):
     if request.method == "POST":
         try:
             cursor.execute("UPDATE packages SET package_name=%s, package_price=%s, duration=%s, image_filename=%s WHERE package_id=%s",
-                           (request.form.get("package_name"), request.form.get("package_price"), request.form.get("duration"), request.form.get("image_filename"), id))
+                           (request.form.get("package_name"), request.form.get("package_price"),
+                            request.form.get("duration"), request.form.get("image_filename"), id))
             db.commit()
             flash("✏️ Package updated successfully!", "success")
             return redirect("/admin/packages")
@@ -1578,6 +1744,7 @@ def edit_package(id):
             cursor.close()
         return render_template("edit_package.html", package=package)
 
+
 @app.route("/admin/users")
 @admin_required
 def admin_users():
@@ -1595,6 +1762,7 @@ def admin_users():
     finally:
         cursor.close()
     return render_template("admin_users.html", users=users)
+
 
 @app.route("/admin/delete_user/<int:id>", methods=["POST"])
 @admin_required
@@ -1617,6 +1785,7 @@ def delete_user(id):
     finally:
         cursor.close()
     return redirect("/admin/users")
+
 
 @app.route("/admin/delete_photographer/<int:id>", methods=["POST"])
 @admin_required
@@ -1643,6 +1812,7 @@ def delete_photographer(id):
         cursor.close()
     return redirect("/admin/photographers")
 
+
 @app.route('/admin/view_user/<int:user_id>')
 @admin_required
 def view_user(user_id):
@@ -1666,17 +1836,14 @@ def view_user(user_id):
         cursor.close()
     return render_template('admin_view_user.html', user=user)
 
-@app.route("/order-success")
-def order_success():
-    order_id = request.args.get("order_id")
-    total = request.args.get("total")
-    return render_template("order_success.html", order_id=order_id, total=total)
 
-# ---------------- FAKE PAYMENT GATEWAY (UPDATED) ----------------
+# =============================================================================
+#  FAKE PAYMENT GATEWAY (DEMO MODE)
+# =============================================================================
 @app.route("/checkout", methods=["GET"])
 @login_required
 def checkout():
-    """Save cart details and redirect to payment page."""
+    """Validate cart, store checkout intent in session, redirect to fake payment."""
     db = get_db()
     if not db:
         flash("Database error", "error")
@@ -1707,7 +1874,7 @@ def checkout():
 
     total = sum(item["package_price"] * item["quantity"] for item in items)
 
-    # Store checkout intent in session
+    # Store checkout intent (includes all needed data to create the order later)
     session["checkout_intent"] = {
         "items": items,
         "total": total,
@@ -1720,13 +1887,13 @@ def checkout():
 @app.route("/payment", methods=["GET", "POST"])
 @login_required
 def payment():
-    """Fake payment page."""
+    """Fake payment page. Card validation only for 'card' method; other methods always succeed."""
     intent = session.get("checkout_intent")
     if not intent:
         flash("No pending checkout. Please add items to cart.", "error")
         return redirect("/cart")
 
-    # Convert stored values to appropriate types (session stores strings)
+    # Session stores values as strings; convert to appropriate numeric types
     try:
         intent["total"] = float(intent["total"])
         for item in intent["items"]:
@@ -1740,13 +1907,12 @@ def payment():
     if request.method == "POST":
         payment_method = request.form.get("payment_method", "card")
 
-        # Card validation only for card payments
+        # Demo: only card payments require the test card number
         if payment_method == "card":
             card_number = request.form.get("card_number", "").replace(" ", "")
             if card_number != "4242424242424242":
                 flash("❌ Payment declined. Please use test card: 4242 4242 4242 4242", "error")
                 return redirect("/payment")
-        # For UPI, Cash, NEFT – always succeed
 
         # Create order
         db = get_db()
@@ -1782,7 +1948,7 @@ def payment():
                     item["quantity"],
                     item["photographer_id"]
                 ))
-            # Clear cart
+            # Clear user's cart
             cursor.execute("DELETE FROM user_packages WHERE user_id = %s", (session["user_id"],))
             db.commit()
             session.pop("checkout_intent", None)
@@ -1796,19 +1962,34 @@ def payment():
         finally:
             cursor.close()
 
-    # GET request – show payment form
+    # GET: render payment form
     return render_template("payment.html", intent=intent)
 
+
+@app.route("/order-success")
+def order_success():
+    order_id = request.args.get("order_id")
+    total = request.args.get("total")
+    return render_template("order_success.html", order_id=order_id, total=total)
+
+
+# =============================================================================
+#  Logout – clear session completely
+# =============================================================================
 @app.route("/logout")
 def logout():
     session.clear()
     flash("You have been logged out successfully.", "success")
     return redirect("/")
 
-# ---------------- RUN APP ----------------
+
+# =============================================================================
+#  Startup: create admin user & video tables if needed
+# =============================================================================
 with app.app_context():
     create_admin_user()
     create_video_tables()
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
