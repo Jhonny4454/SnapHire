@@ -21,6 +21,7 @@
   --ink-soft:#475569;
   --line:#e6e9ef;
   --danger:#dc2626;
+  --success:#16a34a;
 }
 
 html,body{
@@ -108,9 +109,28 @@ h2{
   font-size:14px; margin:6px 0 28px; font-weight:500;
 }
 
+/* flash messages */
+.flash-messages{ margin-bottom:16px; }
+.alert{
+  padding:12px 14px; border-radius:14px;
+  font-size:13px; font-weight:600;
+  display:flex; align-items:center; gap:8px;
+  margin-bottom:8px;
+}
+.alert-error{
+  background:rgba(220,38,38,.08);
+  color:var(--danger);
+  border:1px solid rgba(220,38,38,.2);
+}
+.alert-success{
+  background:rgba(22,163,74,.08);
+  color:var(--success);
+  border:1px solid rgba(22,163,74,.2);
+}
+
 /* inputs */
 .input-group{ position:relative; margin-bottom:18px; }
-.input-group > i:first-of-type{
+.input-group > i.field-icon{
   position:absolute; left:18px; top:50%; transform:translateY(-50%);
   color:#94a3b8; font-size:15px; pointer-events:none;
   transition:color .2s ease;
@@ -123,23 +143,23 @@ h2{
   border-radius:16px;
   transition:border-color .2s, background .2s, box-shadow .2s;
   font-family:inherit;
+  outline:none;
 }
 #password{ padding-right:52px; }
 .input-group input::placeholder{ color:#94a3b8; font-weight:500; }
 .input-group input:focus{
-  outline:none;
   background:#fff;
   border-color:var(--brand-1);
   box-shadow:0 0 0 4px rgba(255,126,95,.18);
 }
-.input-group input:focus + i,
-.input-group:focus-within > i:first-of-type{ color:var(--brand-2); }
+.input-group input:focus ~ .field-icon{ color:var(--brand-2); }
 
 .toggle-password{
   position:absolute; right:14px; top:50%; transform:translateY(-50%);
   width:34px; height:34px; border-radius:10px;
   display:flex; align-items:center; justify-content:center;
   color:#8b97aa; cursor:pointer; background:transparent;
+  border:none;
   transition:color .2s, background .2s, transform .1s;
 }
 .toggle-password:hover{ color:var(--brand-2); background:rgba(255,126,95,.1); }
@@ -153,7 +173,7 @@ h2{
 }
 .forgot-link a:hover{ color:var(--brand-2); }
 
-/* button */
+/* primary sign-in button */
 .login-btn{
   width:100%; padding:15px; margin-top:8px;
   border:none; border-radius:16px; cursor:pointer;
@@ -175,6 +195,44 @@ h2{
 .login-btn:hover::before{ transform:translateX(100%); }
 .login-btn:active{ transform:translateY(0) scale(.99); }
 
+/* divider */
+.divider{
+  display:flex; align-items:center; gap:12px;
+  margin:20px 0 16px;
+}
+.divider::before,.divider::after{
+  content:""; flex:1; height:1px; background:var(--line);
+}
+.divider span{
+  font-size:12px; font-weight:600; color:#94a3b8; white-space:nowrap;
+}
+
+/* secondary / outline button */
+.outline-btn{
+  width:100%; padding:13px 16px;
+  border:1.5px solid var(--line); border-radius:16px; cursor:pointer;
+  color:var(--ink-soft); font-size:14px; font-weight:600;
+  font-family:inherit; background:#fff;
+  display:flex; align-items:center; justify-content:center; gap:9px;
+  text-decoration:none;
+  transition:border-color .2s, color .2s, background .2s, box-shadow .2s;
+}
+.outline-btn:hover{
+  border-color:var(--brand-1); color:var(--brand-2);
+  background:rgba(255,126,95,.05);
+  box-shadow:0 4px 12px rgba(255,77,46,.12);
+}
+.outline-btn + .outline-btn{ margin-top:10px; }
+
+/* get hired badge */
+.hired-badge{
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:10.5px; font-weight:700; color:#fff;
+  background:linear-gradient(105deg,#f59e0b,#ef4444);
+  padding:2px 7px; border-radius:20px;
+  vertical-align:middle; margin-left:4px;
+}
+
 /* signup */
 .signup-link{
   text-align:center; margin-top:24px; padding-top:20px;
@@ -188,17 +246,6 @@ h2{
 }
 .signup-link a:hover{ gap:10px; }
 
-/* error */
-.error{
-  margin-top:16px; padding:12px 14px;
-  background:rgba(220,38,38,.08);
-  color:var(--danger);
-  border:1px solid rgba(220,38,38,.2);
-  border-radius:14px;
-  font-size:13px; font-weight:600;
-  display:flex; align-items:center; justify-content:center; gap:8px;
-}
-
 /* footer */
 .footer-note{
   position:fixed; left:0; right:0; bottom:18px;
@@ -208,6 +255,14 @@ h2{
 }
 .footer-note a{ color:#ffbc9a; font-weight:700; text-decoration:none; }
 .footer-note a:hover{ color:#fff; }
+
+/* security badge row */
+.security-row{
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  margin-top:14px;
+  font-size:11.5px; font-weight:600; color:#94a3b8;
+}
+.security-row i{ font-size:12px; color:#22c55e; }
 
 @media (max-width:500px){
   .login-container{ padding:26px 22px; border-radius:24px; }
@@ -226,34 +281,53 @@ h2{
 </div>
 
 <div class="login-container">
+
+  <!-- ── Logo ── -->
   <div class="logo-section">
     <div class="logo-icon"><i class="fas fa-bolt"></i></div>
     <h2>SnapHire</h2>
     <p class="subtitle">Welcome back · secure access</p>
   </div>
 
+  <!-- ── Flash messages (error + success) ── -->
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-      {% for category, message in messages %}
-        {% if category == 'error' %}
-          <div class="error"><i class="fas fa-circle-exclamation"></i> {{ message }}</div>
-        {% endif %}
-      {% endfor %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">
+            {% if category == 'error' %}
+              <i class="fas fa-circle-exclamation"></i>
+            {% else %}
+              <i class="fas fa-circle-check"></i>
+            {% endif %}
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
     {% endif %}
   {% endwith %}
 
-  <form method="POST" action="">
+  <!-- ── Login form ── -->
+  <form method="POST" action="/">
+    <!-- CSRF token – required by flask backend @csrf_protect -->
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
     <div class="input-group">
-      <input type="text" id="username" name="username" placeholder="Username or email" required autocomplete="username" />
-      <i class="fas fa-user"></i>
+      <input type="text" id="username" name="username"
+             placeholder="Username or email"
+             required autocomplete="username" />
+      <i class="fas fa-user field-icon"></i>
     </div>
 
     <div class="input-group">
-      <input type="password" id="password" name="password" placeholder="Password" required autocomplete="current-password" />
-      <i class="fas fa-lock"></i>
-      <span class="toggle-password" onclick="togglePw()" aria-label="Show password">
+      <input type="password" id="password" name="password"
+             placeholder="Password"
+             required autocomplete="current-password" />
+      <i class="fas fa-lock field-icon"></i>
+      <button type="button" class="toggle-password"
+              onclick="togglePw()" aria-label="Toggle password visibility">
         <i id="pwIcon" class="fas fa-eye"></i>
-      </span>
+      </button>
     </div>
 
     <div class="forgot-link"><a href="#">Forgot password?</a></div>
@@ -263,22 +337,55 @@ h2{
     </button>
   </form>
 
-  <div class="signup-link">
-    New to SnapHire? <a href="#">Create an account <i class="fas fa-arrow-right"></i></a>
+  <!-- ── Divider ── -->
+  <div class="divider"><span>or</span></div>
+
+  <!-- ── Extra buttons ── -->
+  <a href="/signup" class="outline-btn">
+    <i class="fas fa-user-plus"></i>
+    Create an account
+  </a>
+
+  <a href="/get-hired" class="outline-btn">
+    <i class="fas fa-camera"></i>
+    Join as a Photographer
+    <span class="hired-badge"><i class="fas fa-star"></i> Get Hired</span>
+  </a>
+
+  <a href="/admin/login" class="outline-btn">
+    <i class="fas fa-shield-halved"></i>
+    Admin Login
+  </a>
+
+  <!-- ── Security assurance ── -->
+  <div class="security-row">
+    <i class="fas fa-lock"></i>
+    256-bit encrypted · CSRF protected · Rate limited
   </div>
+
+  <!-- ── Signup nudge ── -->
+  <div class="signup-link">
+    New to SnapHire?
+    <a href="/signup">Create an account <i class="fas fa-arrow-right"></i></a>
+  </div>
+
 </div>
 
 <div class="footer-note">
-  © SnapHire · Crafted with <a href="#">care</a>
+  © SnapHire · Crafted with <a href="/about">care</a>
+  &nbsp;·&nbsp;
+  <a href="/terms">Terms</a>
+  &nbsp;·&nbsp;
+  <a href="/privacy">Privacy</a>
 </div>
 
 <script>
-  function togglePw(){
-    const pw = document.getElementById('password');
-    const ic = document.getElementById('pwIcon');
+  function togglePw() {
+    const pw  = document.getElementById('password');
+    const ic  = document.getElementById('pwIcon');
     const show = pw.type === 'password';
     pw.type = show ? 'text' : 'password';
-    ic.classList.toggle('fa-eye', !show);
+    ic.classList.toggle('fa-eye',      !show);
     ic.classList.toggle('fa-eye-slash', show);
   }
 </script>
